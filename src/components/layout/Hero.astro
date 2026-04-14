@@ -1,0 +1,85 @@
+---
+import LinkButton from "@/components/ui/LinkButton.astro";
+---
+
+<section class="luxury-shell px-4 pb-10 pt-8 sm:px-6 lg:px-10 lg:pt-10">
+  <div class="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.04fr_0.96fr] lg:items-center">
+    <div class="relative" data-reveal>
+      <p class="eyebrow mb-5">Parisian care. Clinical clarity. Toucher doux.</p>
+      <h1 class="section-title text-balance max-w-4xl text-[3.3rem] text-charcoal sm:text-[4.6rem] lg:text-[6.4rem]">
+        A luxury ritual that feels quiet, modern, and impossibly soft on skin.
+      </h1>
+      <p class="mt-6 max-w-2xl text-base leading-8 text-charcoal/72 sm:text-lg">
+        KLARITÉ is being shaped as a high-converting beauty destination where serene French elegance
+        meets product-first clarity. Every section is designed to make textures, rituals, and
+        trust feel expensive before a single item enters the cart.
+      </p>
+
+      <div class="mt-8 flex flex-col gap-3 sm:flex-row">
+        <LinkButton href="#boutique">Discover Best-Sellers</LinkButton>
+        <LinkButton href="#rituels" variant="ghost">Explore The Ritual</LinkButton>
+      </div>
+
+      <dl class="mt-10 grid gap-4 sm:grid-cols-3">
+        <div class="panel rounded-[1.5rem] border border-white/70 px-5 py-4">
+          <dt class="eyebrow">Experience</dt>
+          <dd class="mt-3 font-display text-3xl text-charcoal">Zero-JS feel</dd>
+          <p class="mt-2 text-sm leading-6 text-charcoal/66">Calm, fast, tactile interactions shaped for premium conversion.</p>
+        </div>
+        <div class="panel rounded-[1.5rem] border border-white/70 px-5 py-4">
+          <dt class="eyebrow">Positioning</dt>
+          <dd class="mt-3 font-display text-3xl text-charcoal">Luxury + clarity</dd>
+          <p class="mt-2 text-sm leading-6 text-charcoal/66">French beauty codes balanced with clinical confidence and trust.</p>
+        </div>
+        <div class="panel rounded-[1.5rem] border border-white/70 px-5 py-4">
+          <dt class="eyebrow">Visual plan</dt>
+          <dd class="mt-3 font-display text-3xl text-charcoal">Asset ready</dd>
+          <p class="mt-2 text-sm leading-6 text-charcoal/66">Designed to receive the client’s real product stills and texture macros.</p>
+        </div>
+      </dl>
+    </div>
+
+    <div class="relative min-h-[32rem]" data-reveal>
+      <div class="mist-orb left-[14%] top-[8%] h-32 w-32"></div>
+      <div class="mist-orb right-[10%] top-[18%] h-24 w-24"></div>
+      <div class="mist-orb bottom-[20%] left-[12%] h-28 w-28"></div>
+
+      <div class="absolute inset-0 rounded-[2.5rem] border border-white/60 bg-white/30 shadow-[0_20px_80px_rgba(31,37,34,0.08)]"></div>
+
+      <div class="asset-well absolute left-[4%] top-[7%] h-[15rem] w-[48%] sm:h-[18rem]">
+        <div class="relative z-10 flex h-full flex-col justify-between p-5">
+          <span class="eyebrow">Hero Still</span>
+          <div>
+            <p class="font-display text-3xl text-charcoal">Creme Pour Visage</p>
+            <p class="mt-2 max-w-[14rem] text-sm leading-6 text-charcoal/64">
+              Reserved for the client’s green jar hero photograph with texture detail.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="asset-well absolute right-[6%] top-[18%] h-[18rem] w-[42%] sm:h-[21rem]">
+        <div class="relative z-10 flex h-full flex-col justify-between p-5">
+          <span class="eyebrow">Texture Macro</span>
+          <p class="max-w-[10rem] text-sm leading-6 text-charcoal/64">
+            Swirl, droplet, or cream reflection photography slot.
+          </p>
+        </div>
+      </div>
+
+      <div class="ambient-card absolute bottom-[7%] left-[8%] max-w-[18rem] rounded-[1.75rem] border border-white/70 px-5 py-5 shadow-[0_20px_40px_rgba(31,37,34,0.12)]">
+        <p class="eyebrow">Conversion Focus</p>
+        <p class="mt-3 font-display text-2xl text-charcoal">
+          High-intent storytelling that leads straight into best-sellers, concerns, and rituals.
+        </p>
+      </div>
+
+      <div class="panel absolute bottom-[12%] right-[5%] rounded-[1.5rem] border border-white/70 px-5 py-4">
+        <p class="eyebrow">Photography Notes</p>
+        <p class="mt-2 max-w-[13rem] text-sm leading-6 text-charcoal/66">
+          Soft daylight, reflective surfaces, close macro crops, and clean Parisian composition.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,38 @@
+---
+import SectionHeading from "@/components/ui/SectionHeading.astro";
+import { ritualSteps } from "@/data/products";
+---
+
+<section id="rituels" class="px-4 py-20 sm:px-6 lg:px-10">
+  <div class="mx-auto max-w-7xl">
+    <SectionHeading
+      eyebrow="Nos Rituels"
+      title="A scrolling narrative that explains how KLARITÉ should feel, not just what it contains."
+      copy="This structure is built for scrollytelling later with GSAP, but the content already reads clearly without motion and supports premium education."
+    />
+
+    <div class="mt-10 grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
+      <div class="asset-well min-h-[30rem] rounded-[2.5rem]" data-reveal>
+        <div class="relative z-10 flex h-full flex-col justify-between p-8">
+          <span class="eyebrow">Editorial texture panel</span>
+          <div>
+            <p class="font-display text-4xl text-charcoal sm:text-5xl">Macro stills, fluid reflections, cream ribbons.</p>
+            <p class="mt-4 max-w-md text-sm leading-7 text-charcoal/68">
+              This left rail is ready for a premium texture montage once the client image set lands in the repo.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-5">
+        {ritualSteps.map((step) => (
+          <article class="ambient-card rounded-[2rem] border border-white/70 px-7 py-8 shadow-[0_20px_50px_rgba(31,37,34,0.07)]" data-reveal>
+            <p class="eyebrow">{step.number}</p>
+            <h3 class="mt-4 font-display text-3xl text-charcoal sm:text-4xl">{step.title}</h3>
+            <p class="mt-4 max-w-xl text-base leading-8 text-charcoal/72">{step.copy}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>

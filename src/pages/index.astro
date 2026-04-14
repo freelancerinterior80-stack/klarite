@@ -1,0 +1,380 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { featuredProducts, testimonials } from "@/data/products";
+
+const productMap = new Map(featuredProducts.map((product) => [product.slug, product]));
+
+const faceCream = productMap.get("creme-pour-visage")!;
+const handCream = productMap.get("creme-pour-les-mains")!;
+const micellarWater = productMap.get("eau-micellaire")!;
+const bodyLotion = productMap.get("lotion-hydratante")!;
+const mistCharme = productMap.get("brume-charme")!;
+
+const signatureProducts = [faceCream, handCream, micellarWater];
+
+const benefits = [
+  {
+    title: "Clarity",
+    copy: "Gentle cleansing and intelligent hydration refine the look of texture so skin appears fresh, composed, and balanced."
+  },
+  {
+    title: "Softness",
+    copy: "Silken creams and weightless lotions leave behind a supple finish that feels quiet, comforting, and expensive."
+  },
+  {
+    title: "Radiance",
+    copy: "Each formula is designed to return light to the skin with a satin glow rather than a glossy, overworked shine."
+  }
+];
+
+const collectionCards = [
+  {
+    product: faceCream,
+    className: "lg:col-span-2 lg:row-span-2",
+    imageHeight: "h-[28rem] sm:h-[34rem] lg:h-[44rem]",
+    imageClass: "object-[center_36%]"
+  },
+  {
+    product: bodyLotion,
+    className: "",
+    imageHeight: "h-[24rem] sm:h-[28rem] lg:h-[24rem]",
+    imageClass: "object-center"
+  },
+  {
+    product: handCream,
+    className: "",
+    imageHeight: "h-[24rem] sm:h-[28rem] lg:h-[24rem]",
+    imageClass: "object-[center_42%]"
+  },
+  {
+    product: mistCharme,
+    className: "lg:col-span-2",
+    imageHeight: "h-[24rem] sm:h-[30rem] lg:h-[28rem]",
+    imageClass: "object-center"
+  }
+];
+
+const ritualSteps = [
+  {
+    number: "01",
+    title: "Cleanse",
+    copy: "Begin with Eau Micellaire to remove the day softly and restore a clear, calm canvas.",
+    image: {
+      src: "/images/products/eau-micellaire-white.jpeg",
+      width: 1024,
+      height: 1536,
+      alt: "KLARITE Micellar Water on a clean white backdrop."
+    }
+  },
+  {
+    number: "02",
+    title: "Hydrate",
+    copy: "Layer Face Cream and Body Lotion for supple skin, refined texture, and comfort that lasts.",
+    image: {
+      src: "/images/products/creme-visage-closed.jpeg",
+      width: 1024,
+      height: 1536,
+      alt: "KLARITE Face Cream closed jar on a soft white background."
+    }
+  },
+  {
+    number: "03",
+    title: "Perfume",
+    copy: "Finish with a fine mist of fragrance for a soft floral trail that feels polished and intimate.",
+    image: {
+      src: "/images/products/body-mist-jolie-chic.jpeg",
+      width: 880,
+      height: 1168,
+      alt: "KLARITE Body Mist bottle styled with petals on marble."
+    }
+  }
+];
+---
+
+<BaseLayout
+  title="KLARITE | Toucher Doux"
+  description="Luxury skincare rituals for visibly clearer, softer, and more radiant skin."
+>
+  <section id="collection" class="section-band section-band--first section-band--cream px-4 pb-24 pt-12 sm:px-6 lg:px-10 lg:pb-32 lg:pt-16">
+    <div class="mx-auto grid max-w-[90rem] gap-20 lg:grid-cols-[0.84fr_1.16fr] lg:items-center">
+      <div class="max-w-[36rem]" data-reveal>
+        <p class="eyebrow">Toucher Doux</p>
+        <h1 class="section-title mt-6 max-w-[11ch] text-[3.6rem] text-charcoal sm:text-[5rem] lg:text-[6.8rem]">
+          Quiet luxury for skin that looks luminous and composed.
+        </h1>
+        <p class="mt-10 max-w-[30rem] text-[1.05rem] leading-[1.8] text-stone sm:text-lg sm:leading-[1.8]">
+          KLARITE distills the ritual of French beauty into calm, high-performance formulas with clinical clarity and a soft editorial finish.
+        </p>
+
+        <div class="mt-11 flex flex-col gap-4 sm:flex-row">
+          <a href="#signature-products" class="cta-primary">Shop Collection</a>
+          <a href="#skin-quiz" class="cta-secondary">Skin Quiz</a>
+        </div>
+
+        <ul class="mt-16 grid gap-5 border-t border-charcoal/8 pt-8 text-[0.68rem] uppercase tracking-[0.32em] text-stone/80 sm:grid-cols-3">
+          <li>Parisian restraint</li>
+          <li>Visible softness</li>
+          <li>Refined daily rituals</li>
+        </ul>
+      </div>
+
+      <div class="relative min-h-[34rem] sm:min-h-[44rem] lg:min-h-[50rem]" data-reveal>
+        <div class="hero-glow left-[6%] top-[10%] h-52 w-52 sm:h-80 sm:w-80 lg:h-[27rem] lg:w-[27rem]"></div>
+        <div class="hero-glow hero-glow--gold right-[2%] top-[8%] h-56 w-56 sm:h-[22rem] sm:w-[22rem] lg:h-[30rem] lg:w-[30rem]"></div>
+        <div class="absolute left-1/2 top-[10%] h-[18rem] w-[18rem] -translate-x-1/2 rounded-full bg-cream/80 blur-[90px] sm:h-[27rem] sm:w-[27rem] lg:h-[32rem] lg:w-[32rem]"></div>
+
+        <div class="hero-glass relative flex h-full items-end justify-center overflow-hidden px-6 pb-12 pt-14 sm:rounded-[2.8rem] sm:px-10 sm:pb-14 sm:pt-16">
+          <div class="absolute inset-0 bg-[linear-gradient(145deg,rgba(255,252,248,0.88),rgba(252,248,242,0.32))]"></div>
+          <div class="absolute left-1/2 top-[8%] h-[58%] w-[82%] -translate-x-1/2 rounded-full bg-white/80 blur-[48px]"></div>
+          <div class="absolute left-1/2 top-[14%] h-[52%] w-[66%] -translate-x-1/2 rounded-full bg-sage-300/24 blur-[88px]"></div>
+          <div class="absolute left-1/2 top-[16%] h-[48%] w-[58%] -translate-x-1/2 rounded-full bg-gold/20 blur-[104px]"></div>
+          <div class="absolute left-1/2 top-[22%] h-[34%] w-[42%] -translate-x-1/2 rounded-full bg-cream/90 blur-[22px]"></div>
+          <div class="absolute inset-x-[12%] bottom-[8%] h-16 rounded-full bg-charcoal/[0.12] blur-[40px]"></div>
+          <div class="absolute inset-x-[26%] bottom-[9%] h-7 rounded-full bg-white/72 blur-[20px]"></div>
+
+          <img
+            src={faceCream.image.src}
+            width={faceCream.image.width}
+            height={faceCream.image.height}
+            alt={faceCream.image.alt}
+            class="relative z-10 h-[29rem] w-auto max-w-full object-contain object-center drop-shadow-[0_36px_72px_rgba(28,28,28,0.22)] sm:h-[37rem] lg:h-[44rem]"
+            loading="eager"
+            decoding="async"
+            data-float
+            data-float-distance="14"
+            data-float-duration="11.5"
+            data-scale-in
+          />
+
+          <aside
+            class="absolute bottom-6 left-6 z-20 w-[10.75rem] rounded-[1.75rem] border border-white/68 bg-[rgba(255,252,249,0.88)] p-3 shadow-[0_20px_52px_rgba(28,28,28,0.1)] backdrop-blur-xl sm:bottom-8 sm:left-8 sm:w-[12.5rem] sm:p-4"
+            data-float
+            data-float-distance="6"
+            data-float-duration="13.5"
+          >
+            <img
+              src="/images/products/creme-visage-box.jpeg"
+              width="1024"
+              height="1536"
+              alt="KLARITE Face Cream packaging."
+              class="h-32 w-full rounded-[1.35rem] object-cover object-center sm:h-40"
+              loading="lazy"
+              decoding="async"
+            />
+            <p class="mt-3 text-[0.68rem] uppercase tracking-[0.24em] text-charcoal/50">Signature Care</p>
+            <p class="mt-2 font-display text-xl leading-6 text-charcoal">Face Cream</p>
+          </aside>
+
+          <div class="absolute right-6 top-6 z-20 max-w-[13.5rem] border-l border-charcoal/10 pl-4 text-right sm:right-8 sm:top-8 sm:max-w-[15rem] sm:pl-5">
+            <p class="eyebrow text-charcoal/42">Hero Formula</p>
+            <p class="mt-3 font-display text-[1.7rem] leading-[1.2] tracking-[-0.015em] text-charcoal sm:text-[2.2rem]">
+              Cushion-soft hydration with a satin glow.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="signature-products" class="section-band section-band--white px-4 py-36 sm:px-6 lg:px-10 lg:py-40">
+    <div class="mx-auto max-w-[90rem]">
+      <div class="max-w-[38rem]" data-reveal>
+        <p class="eyebrow">Signature Products</p>
+        <h2 class="section-title mt-7 max-w-[11ch] text-4xl text-charcoal sm:text-5xl lg:text-[5rem]">
+          Three essentials that define the KLARITE wardrobe.
+        </h2>
+      </div>
+
+      <div class="mt-20 grid gap-12 xl:grid-cols-3">
+        {signatureProducts.map((product) => (
+          <article class="editorial-card group flex flex-col" data-reveal>
+            <div class="editorial-media">
+              <img
+                src={product.image.src}
+                width={product.image.width}
+                height={product.image.height}
+                alt={product.image.alt}
+                class="h-[29rem] w-full object-cover sm:h-[36rem]"
+                loading="lazy"
+                decoding="async"
+                data-scale-in
+              />
+            </div>
+
+            <div class="mt-8 flex items-start justify-between gap-4">
+              <div>
+                <p class="eyebrow">{product.category}</p>
+                <h3 class="mt-4 font-display text-[2rem] leading-[1.05] tracking-[-0.02em] text-charcoal sm:text-[2.5rem]">
+                  {product.name}
+                </h3>
+                <p class="mt-2 text-[0.72rem] uppercase tracking-[0.22em] text-stone/80">{product.notes[0]}</p>
+              </div>
+              <span class="mt-1 shrink-0 text-[0.72rem] uppercase tracking-[0.2em] text-charcoal/48">{product.price}</span>
+            </div>
+
+            <p class="mt-5 max-w-[24rem] text-[0.94rem] leading-[1.75] text-stone">{product.shortDesc}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section id="benefits" class="section-band section-band--warm px-4 py-36 sm:px-6 lg:px-10 lg:py-40">
+    <div class="mx-auto grid max-w-[90rem] gap-16 lg:grid-cols-[1fr_1fr] lg:items-center">
+      <div class="relative overflow-hidden rounded-[2rem] border border-white/65 bg-[rgba(255,252,249,0.72)] p-4 shadow-[0_28px_80px_rgba(28,28,28,0.07)] backdrop-blur-xl sm:rounded-[2.4rem]" data-reveal>
+        <div class="absolute inset-x-[16%] top-[8%] h-32 rounded-full bg-white/70 blur-[36px]"></div>
+        <div class="absolute inset-x-[18%] bottom-[8%] h-10 rounded-full bg-charcoal/10 blur-2xl"></div>
+        <img
+          src="/images/products/lotion-hydratante-white.jpeg"
+          width="1024"
+          height="1536"
+          alt="KLARITE Body Lotion on a soft white backdrop."
+          class="relative h-[30rem] w-full rounded-[1.55rem] object-cover object-center sm:h-[42rem]"
+          loading="lazy"
+          decoding="async"
+          data-scale-in
+        />
+      </div>
+
+      <div class="max-w-[34rem]" data-reveal>
+        <p class="eyebrow">Benefits</p>
+        <h2 class="section-title mt-7 max-w-[10ch] text-4xl text-charcoal sm:text-5xl lg:text-[5rem]">
+          A clean formula story told in three outcomes.
+        </h2>
+
+        <div class="mt-16 space-y-11">
+          {benefits.map((benefit, index) => (
+            <article class="border-t border-charcoal/8 pt-8">
+              <div class="flex items-baseline gap-4">
+                <span class="font-display text-3xl text-gold sm:text-[2.2rem]">0{index + 1}</span>
+                <h3 class="font-display text-[1.8rem] tracking-[-0.015em] text-charcoal sm:text-[2.2rem]">{benefit.title}</h3>
+              </div>
+              <p class="mt-4 max-w-[28rem] text-[0.94rem] leading-[1.75] text-stone">{benefit.copy}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="collection-grid" class="section-band section-band--white px-4 py-36 sm:px-6 lg:px-10 lg:py-40">
+    <div class="mx-auto max-w-[90rem]">
+      <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+        <div class="max-w-[38rem]" data-reveal>
+          <p class="eyebrow">Collection</p>
+          <h2 class="section-title mt-7 max-w-[11ch] text-4xl text-charcoal sm:text-5xl lg:text-[5rem]">
+            The collection arranged with discipline and restraint.
+          </h2>
+        </div>
+        <p class="max-w-[22rem] text-[0.94rem] leading-[1.75] text-stone" data-reveal>
+          One feature, two supporting rituals, and a final horizontal note to keep the page composed rather than crowded.
+        </p>
+      </div>
+
+      <div class="mt-20 grid gap-8 lg:grid-cols-3 lg:auto-rows-[minmax(18rem,auto)] lg:gap-10">
+        {collectionCards.map(({ product, className, imageHeight, imageClass }) => (
+          <article class:list={["editorial-card group flex h-full flex-col justify-between", className]} data-reveal>
+            <div class="editorial-media">
+              <img
+                src={product.image.src}
+                width={product.image.width}
+                height={product.image.height}
+                alt={product.image.alt}
+                class:list={["w-full object-cover", imageHeight, imageClass]}
+                loading="lazy"
+                decoding="async"
+                data-scale-in
+              />
+            </div>
+
+            <div class="mt-8 flex flex-1 flex-col">
+              <p class="eyebrow">{product.category}</p>
+              <div class="mt-3 flex items-start justify-between gap-4">
+                <h3 class="font-display text-[1.9rem] leading-[1.06] tracking-[-0.02em] text-charcoal sm:text-[2.4rem]">{product.name}</h3>
+                <span class="mt-1 shrink-0 text-[0.72rem] uppercase tracking-[0.2em] text-charcoal/44">{product.price}</span>
+              </div>
+              <p class="mt-4 max-w-[28rem] text-[0.94rem] leading-[1.75] text-stone">{product.description}</p>
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section id="rituals" class="section-band section-band--cream px-4 py-36 sm:px-6 lg:px-10 lg:py-40">
+    <div class="mx-auto max-w-[90rem]">
+      <div class="max-w-[38rem]" data-reveal>
+        <p class="eyebrow">Ritual</p>
+        <h2 class="section-title mt-7 max-w-[10ch] text-4xl text-charcoal sm:text-5xl lg:text-[5rem]">
+          Cleanse, hydrate, perfume.
+        </h2>
+      </div>
+
+      <div class="mt-20 grid gap-10 lg:grid-cols-3">
+        {ritualSteps.map((step) => (
+          <article class="group border-t border-charcoal/8 pt-8" data-reveal>
+            <div class="overflow-hidden rounded-[1.6rem] border border-white/60 bg-[rgba(255,252,249,0.65)] shadow-[0_18px_48px_rgba(28,28,28,0.05)]">
+              <img
+                src={step.image.src}
+                width={step.image.width}
+                height={step.image.height}
+                alt={step.image.alt}
+                class="h-[22rem] w-full object-cover object-center transition duration-[1200ms] ease-[var(--ease-premium)] group-hover:scale-[1.05] sm:h-[26rem]"
+                loading="lazy"
+                decoding="async"
+                data-scale-in
+              />
+            </div>
+            <div class="mt-7 flex items-baseline gap-4">
+              <span class="font-display text-[1.7rem] text-gold sm:text-[2rem]">{step.number}</span>
+              <h3 class="font-display text-[1.9rem] tracking-[-0.02em] text-charcoal sm:text-[2.4rem]">{step.title}</h3>
+            </div>
+            <p class="mt-4 max-w-[22rem] text-[0.94rem] leading-[1.75] text-stone">{step.copy}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section id="skin-quiz" class="section-band section-band--warm px-4 py-28 sm:px-6 lg:px-10 lg:py-32">
+    <div class="mx-auto flex max-w-[90rem] flex-col gap-6 rounded-[2rem] border border-white/65 bg-[rgba(255,252,249,0.72)] px-8 py-12 shadow-[0_20px_60px_rgba(28,28,28,0.06)] backdrop-blur-xl lg:flex-row lg:items-center lg:justify-between lg:px-12 lg:py-14">
+      <div data-reveal>
+        <p class="eyebrow">Skin Quiz</p>
+        <p class="mt-4 max-w-[30rem] font-display text-[1.75rem] leading-[1.2] tracking-[-0.015em] text-charcoal sm:text-[2.6rem]">
+          Find the ritual your skin is asking for, with guidance that feels personal and precise.
+        </p>
+      </div>
+      <div class="flex flex-col items-start gap-4" data-reveal>
+        <p class="max-w-[16rem] text-[0.67rem] uppercase tracking-[0.32em] text-stone/80">
+          Diagnostic flow reserved for the next phase.
+        </p>
+        <a href="#signature-products" class="cta-secondary">Browse Essentials</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="testimonials" class="section-band section-band--white px-4 py-36 sm:px-6 lg:px-10 lg:py-40">
+    <div class="mx-auto max-w-[90rem]">
+      <div class="max-w-[34rem]" data-reveal>
+        <p class="eyebrow">Testimonials</p>
+        <h2 class="section-title mt-7 max-w-[10ch] text-4xl text-charcoal sm:text-5xl lg:text-[5rem]">
+          Words that linger like fragrance.
+        </h2>
+      </div>
+
+      <div class="mt-20 grid gap-14 lg:grid-cols-3">
+        {testimonials.map((testimonial) => (
+          <blockquote class="border-t border-charcoal/8 pt-10" data-reveal>
+            <p class="font-display text-[1.75rem] leading-[1.25] tracking-[-0.015em] text-charcoal sm:text-[2.1rem]">
+              &ldquo;{testimonial.quote}&rdquo;
+            </p>
+            <footer class="mt-8 text-[0.67rem] uppercase tracking-[0.3em] text-stone">
+              {testimonial.name}
+              <span class="ml-3 text-charcoal/36">{testimonial.detail}</span>
+            </footer>
+          </blockquote>
+        ))}
+      </div>
+    </div>
+  </section>
+</BaseLayout>

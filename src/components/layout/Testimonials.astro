@@ -1,0 +1,25 @@
+---
+import SectionHeading from "@/components/ui/SectionHeading.astro";
+import { testimonials } from "@/data/products";
+---
+
+<section class="px-4 py-20 sm:px-6 lg:px-10">
+  <div class="mx-auto max-w-7xl">
+    <SectionHeading
+      eyebrow="Testimonials"
+      title="Social proof written in a tone that still feels rarefied."
+      copy="The layout avoids loud review widgets and instead presents feedback like discreet endorsements, preserving brand value while strengthening trust."
+      align="center"
+    />
+
+    <div class="mt-10 grid gap-5 lg:grid-cols-3">
+      {testimonials.map((testimonial) => (
+        <article class="ambient-card rounded-[2rem] border border-white/70 p-7 shadow-[0_20px_50px_rgba(31,37,34,0.07)]" data-reveal>
+          <p class="font-display text-3xl leading-10 text-charcoal">“{testimonial.quote}”</p>
+          <p class="mt-6 text-sm uppercase tracking-[0.2em] text-charcoal/58">{testimonial.name}</p>
+          <p class="mt-2 text-sm text-charcoal/66">{testimonial.detail}</p>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>

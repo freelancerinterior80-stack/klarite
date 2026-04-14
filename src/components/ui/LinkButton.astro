@@ -1,0 +1,20 @@
+---
+interface Props {
+  href: string;
+  variant?: "gold" | "ghost";
+  class?: string;
+}
+
+const { href, variant = "gold", class: className = "" } = Astro.props;
+
+const styles = {
+  gold:
+    "gold-shine inline-flex items-center justify-center rounded-full border border-gold/40 bg-charcoal px-6 py-3 text-sm font-medium tracking-[0.18em] text-cream uppercase transition hover:-translate-y-0.5 hover:border-gold hover:bg-[#111714]",
+  ghost:
+    "inline-flex items-center justify-center rounded-full border border-charcoal/14 bg-white/70 px-6 py-3 text-sm font-medium tracking-[0.18em] text-charcoal uppercase transition hover:-translate-y-0.5 hover:border-charcoal/28 hover:bg-white"
+};
+---
+
+<a href={href} class:list={[styles[variant], className]}>
+  <slot />
+</a>

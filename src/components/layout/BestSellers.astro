@@ -1,0 +1,21 @@
+---
+import ProductCard from "@/components/product/ProductCard.astro";
+import SectionHeading from "@/components/ui/SectionHeading.astro";
+import { featuredProducts } from "@/data/products";
+---
+
+<section id="boutique" class="px-4 py-20 sm:px-6 lg:px-10">
+  <div class="mx-auto max-w-7xl">
+    <SectionHeading
+      eyebrow="Best-Sellers"
+      title="A boutique introduction built around the products clients will ask for first."
+      copy="The homepage leads immediately into the most desirable KLARITÉ formulas, framed with editorial calm and enough product clarity to keep intent high."
+    />
+
+    <div class="mt-10 overflow-x-auto pb-4 [scrollbar-width:none]">
+      <div class="flex snap-x gap-5">
+        {featuredProducts.map((product) => <ProductCard product={product} />)}
+      </div>
+    </div>
+  </div>
+</section>

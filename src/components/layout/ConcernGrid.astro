@@ -1,0 +1,46 @@
+---
+import SectionHeading from "@/components/ui/SectionHeading.astro";
+import { concerns } from "@/data/products";
+---
+
+<section id="concerns" class="px-4 py-20 sm:px-6 lg:px-10">
+  <div class="mx-auto max-w-7xl">
+    <SectionHeading
+      eyebrow="Shop By Concern"
+      title="Structured like a beauty editorial, but tuned for fast self-selection."
+      copy="This section is designed to help visitors identify themselves in seconds, reducing friction and making the catalog feel personally relevant."
+    />
+
+    <div class="mt-10 grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
+      <article class="grain ambient-card rounded-[2.4rem] border border-white/70 p-8 shadow-[0_24px_70px_rgba(31,37,34,0.08)]" data-reveal>
+        <p class="eyebrow">Primary concern</p>
+        <h3 class="mt-4 font-display text-4xl text-charcoal sm:text-5xl">{concerns[0].title}</h3>
+        <p class="mt-5 max-w-xl text-base leading-8 text-charcoal/72">{concerns[0].copy}</p>
+        <div class="mt-8 asset-well h-72 rounded-[2rem]">
+          <div class="relative z-10 flex h-full items-end p-6">
+            <p class="max-w-xs text-sm leading-7 text-charcoal/68">
+              Reserved for the green jar still, open texture, or reflective packaging detail selected by the client.
+            </p>
+          </div>
+        </div>
+      </article>
+
+      <div class="grid gap-5">
+        {concerns.slice(1).map((concern, index) => (
+          <article class="ambient-card rounded-[2rem] border border-white/70 p-7 shadow-[0_20px_50px_rgba(31,37,34,0.07)]" data-reveal>
+            <p class="eyebrow">{index === 0 ? "Hydration concern" : "Cleansing concern"}</p>
+            <h3 class="mt-4 font-display text-3xl text-charcoal">{concern.title}</h3>
+            <p class="mt-4 text-sm leading-7 text-charcoal/72">{concern.copy}</p>
+            <div class="mt-6 asset-well h-44 rounded-[1.75rem]">
+              <div class="relative z-10 flex h-full items-end p-5">
+                <p class="text-sm leading-6 text-charcoal/64">
+                  Photography slot for {index === 0 ? "blue hand cream or lotion" : "pink micellar bottle"}.
+                </p>
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
