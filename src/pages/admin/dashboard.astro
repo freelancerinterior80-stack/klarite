@@ -134,19 +134,29 @@ const extraCards = [
   },
 ];
 
-const now = new Date();
-const greeting = now.getHours() < 12 ? "Good morning" : now.getHours() < 18 ? "Good afternoon" : "Good evening";
-const dateStr = now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 ---
 
 <AdminLayout title="Dashboard">
 
   <!-- Welcome banner -->
   <div class="mb-8 rounded-[1.5rem] bg-charcoal px-8 py-7 text-cream shadow-lg">
-    <p class="text-xs uppercase tracking-widest text-cream/40 mb-1">{dateStr}</p>
-    <h1 class="font-display text-3xl text-cream">{greeting} 👋</h1>
+    <p id="dash-date" class="text-xs uppercase tracking-widest text-cream/40 mb-1"></p>
+    <h1 id="dash-greeting" class="font-display text-3xl text-cream">Welcome 👋</h1>
     <p class="mt-1 text-sm text-cream/55">Here's an overview of your KLARITÉ content.</p>
   </div>
+
+  <script is:inline>
+    (function () {
+      var now = new Date();
+      var h = now.getHours();
+      var greeting = h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+      var dateStr = now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+      var dateEl = document.getElementById("dash-date");
+      var greetEl = document.getElementById("dash-greeting");
+      if (dateEl) dateEl.textContent = dateStr;
+      if (greetEl) greetEl.textContent = greeting + " 👋";
+    })();
+  </script>
 
   <!-- Stats grid -->
   <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
