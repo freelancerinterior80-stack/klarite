@@ -1,6 +1,0 @@
----
-// Middleware handles locale detection and redirects.
-// This SSR fallback catches any edge case where middleware doesn't fire.
-export const prerender = false;
-return Astro.redirect("/fr/", 302);
----
