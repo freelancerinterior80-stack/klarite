@@ -22,6 +22,13 @@ export const seoSettingsType = defineType({
       description: "Recommended: 1200 × 630 px",
       options: { hotspot: true },
     }),
+    defineField({
+      name: "whatsappButtonColor",
+      title: "WhatsApp Button Color",
+      type: "string",
+      description: 'Hex color for the "Commander via WhatsApp" button, e.g. #25D366',
+      initialValue: "#25D366",
+    }),
   ],
   preview: {
     select: { title: "siteTitle" },

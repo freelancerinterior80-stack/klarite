@@ -77,6 +77,14 @@ const canonical = seo?.canonicalUrl
       rel="stylesheet"
     />
     <ClientRouter />
+
+    <!-- WhatsApp button color (set from admin) -->
+    <script is:inline>
+      fetch('/api/site-colors.json')
+        .then(function(r){return r.json();})
+        .then(function(d){if(d&&d.waColor){document.documentElement.style.setProperty('--wa-color',d.waColor);}})
+        .catch(function(){});
+    </script>
   </head>
   <body class="page-frame">
     <Header locale={locale} />

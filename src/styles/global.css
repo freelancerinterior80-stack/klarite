@@ -533,19 +533,19 @@ img {
   font-weight: 500;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  background: #25D366;
+  background: var(--wa-color, #25D366);
   color: #ffffff;
   transition:
     transform 320ms var(--ease-premium),
     opacity 250ms ease,
     box-shadow 320ms var(--ease-premium);
-  box-shadow: 0 8px 24px rgba(37, 211, 102, 0.28);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
 }
 
 .wa-btn:hover {
   transform: translateY(-2px);
   opacity: 0.92;
-  box-shadow: 0 14px 34px rgba(37, 211, 102, 0.36);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.22);
 }
 
 /* ═══════════════════════════════════════
