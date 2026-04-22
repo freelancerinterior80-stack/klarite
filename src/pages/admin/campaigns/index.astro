@@ -3,6 +3,20 @@ export const prerender = false;
 import AdminLayout from "@/layouts/AdminLayout.astro";
 import { writeClient } from "@/sanity/write-client";
 
+let error = "";
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  const deleteId = form.get("deleteId") as string;
+  if (deleteId) {
+    try {
+      await writeClient.delete(deleteId);
+    } catch {
+      error = "Delete failed. Please try again.";
+    }
+  }
+}
+
 const campaigns = await writeClient.fetch(
   `*[_type == "campaign"] | order(_createdAt desc) { _id, title, isActive, "slideCount": count(slides) }`
 );
@@ -20,6 +34,8 @@ const activeCount = campaigns.filter((c: any) => c.isActive).length;
       + New Campaign
     </a>
   </div>
+
+  {error && <div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm text-red-700">{error}</div>}
 
   {activeCount > 1 && (
     <div class="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-5 py-3 text-sm text-amber-800">
@@ -54,6 +70,15 @@ const activeCount = campaigns.filter((c: any) => c.isActive).length;
           >
             Edit
           </a>
+          <form method="POST" onsubmit="return confirm('Delete this campaign? This cannot be undone.')">
+            <input type="hidden" name="deleteId" value={c._id} />
+            <button
+              type="submit"
+              class="shrink-0 rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-xs font-medium text-red-600 transition hover:bg-red-100"
+            >
+              Delete
+            </button>
+          </form>
         </div>
       ))}
     </div>
