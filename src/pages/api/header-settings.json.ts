@@ -19,13 +19,24 @@ export const GET: APIRoute = async ({ request }) => {
     });
   }
 
+  const labelKey = `label_${locale}` as "label_fr" | "label_en" | "label_ar";
+  const navItems = Array.isArray(doc.navItems) && doc.navItems.length > 0
+    ? doc.navItems
+        .filter((item: any) => item.url && (item[labelKey] || item.label_fr))
+        .map((item: any) => ({
+          label: item[labelKey] || item.label_fr || "",
+          url: item.url,
+        }))
+    : null;
+
   return new Response(
     JSON.stringify({
-      tagline:      loc(doc.tagline, locale),
-      shopCtaLabel: loc(doc.shopCtaLabel, locale),
-      shopCtaUrl:   doc.shopCtaUrl ?? null,
+      tagline:       loc(doc.tagline, locale),
+      shopCtaLabel:  loc(doc.shopCtaLabel, locale),
+      shopCtaUrl:    doc.shopCtaUrl ?? null,
       skinQuizLabel: loc(doc.skinQuizLabel, locale),
-      skinQuizUrl:  doc.skinQuizUrl ?? null,
+      skinQuizUrl:   doc.skinQuizUrl ?? null,
+      navItems,
     }),
     { headers: { "Content-Type": "application/json" } }
   );

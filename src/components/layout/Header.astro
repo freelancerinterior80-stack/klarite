@@ -39,7 +39,7 @@ const navItems = [
     </a>
 
     <!-- Desktop nav -->
-    <nav class="hidden items-center gap-8 lg:flex">
+    <nav id="header-nav-desktop" class="hidden items-center gap-8 lg:flex">
       {navItems.map((item) => (
         <a
           href={item.href}
@@ -94,7 +94,7 @@ const navItems = [
     id="mobile-menu"
     class="mx-auto mt-2 hidden max-w-[90rem] overflow-hidden rounded-[1.8rem] border border-white/75 bg-white/95 shadow-[0_24px_60px_rgba(26,26,26,0.12)] backdrop-blur-2xl"
   >
-    <nav class="flex flex-col px-6 pt-6">
+    <nav id="header-nav-mobile" class="flex flex-col px-6 pt-6">
       {navItems.map((item) => (
         <a
           href={item.href}
@@ -124,18 +124,44 @@ const navItems = [
       .then(function (r) { return r.json(); })
       .then(function (d) {
         if (!d) return;
-        var tagline   = document.getElementById("header-tagline");
-        var skinQuiz  = document.getElementById("header-skin-quiz");
-        var shopCta   = document.getElementById("header-shop-cta");
-        var shopCtaM  = document.getElementById("header-shop-cta-mobile");
 
-        if (d.tagline      && tagline)  tagline.textContent  = d.tagline;
+        // ── Text / link overrides ──────────────────────────────
+        var tagline  = document.getElementById("header-tagline");
+        var skinQuiz = document.getElementById("header-skin-quiz");
+        var shopCta  = document.getElementById("header-shop-cta");
+        var shopCtaM = document.getElementById("header-shop-cta-mobile");
+
+        if (d.tagline       && tagline)  tagline.textContent  = d.tagline;
         if (d.skinQuizLabel && skinQuiz) skinQuiz.textContent = d.skinQuizLabel;
-        if (d.skinQuizUrl  && skinQuiz) skinQuiz.setAttribute("href", d.skinQuizUrl);
-        if (d.shopCtaLabel && shopCta)  shopCta.textContent  = d.shopCtaLabel;
-        if (d.shopCtaUrl   && shopCta)  shopCta.setAttribute("href", d.shopCtaUrl);
-        if (d.shopCtaLabel && shopCtaM) shopCtaM.textContent = d.shopCtaLabel;
-        if (d.shopCtaUrl   && shopCtaM) shopCtaM.setAttribute("href", d.shopCtaUrl);
+        if (d.skinQuizUrl   && skinQuiz) skinQuiz.setAttribute("href", d.skinQuizUrl);
+        if (d.shopCtaLabel  && shopCta)  shopCta.textContent  = d.shopCtaLabel;
+        if (d.shopCtaUrl    && shopCta)  shopCta.setAttribute("href", d.shopCtaUrl);
+        if (d.shopCtaLabel  && shopCtaM) shopCtaM.textContent = d.shopCtaLabel;
+        if (d.shopCtaUrl    && shopCtaM) shopCtaM.setAttribute("href", d.shopCtaUrl);
+
+        // ── Nav items override ─────────────────────────────────
+        if (!Array.isArray(d.navItems) || d.navItems.length === 0) return;
+
+        var linkClass = "group/link relative text-[0.68rem] uppercase tracking-[0.28em] text-charcoal/48 transition-colors duration-300 hover:text-charcoal";
+        var mobileClass = "mobile-nav-link border-b border-charcoal/7 py-4 text-sm uppercase tracking-[0.24em] text-charcoal/60 transition-colors duration-200 hover:text-charcoal last:border-none";
+
+        var desktopNav = document.getElementById("header-nav-desktop");
+        var mobileNav  = document.getElementById("header-nav-mobile");
+
+        if (desktopNav) {
+          desktopNav.innerHTML = d.navItems.map(function (item) {
+            return '<a href="' + item.url + '" data-nav-link class="' + linkClass + '">'
+              + item.label
+              + '<span class="nav-underline absolute -bottom-0.5 left-0 h-px w-0 bg-gold transition-all duration-500 ease-[var(--ease-premium)]"></span>'
+              + '</a>';
+          }).join("");
+        }
+
+        if (mobileNav) {
+          mobileNav.innerHTML = d.navItems.map(function (item) {
+            return '<a href="' + item.url + '" class="' + mobileClass + '">' + item.label + '</a>';
+          }).join("");
+        }
       })
       .catch(function () {});
   })();

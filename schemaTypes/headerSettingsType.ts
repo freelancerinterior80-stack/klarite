@@ -39,6 +39,27 @@ export const headerSettingsType = defineType({
       initialValue: "#skin-quiz",
       description: "Where the skin quiz link points",
     }),
+    defineField({
+      name: "navItems",
+      title: "Navigation Links",
+      description: "Custom nav links. If set, these replace the default navigation. Leave empty to use defaults.",
+      type: "array",
+      of: [
+        {
+          type: "object",
+          name: "navItem",
+          fields: [
+            defineField({ name: "label_fr", title: "Label (FR)", type: "string" }),
+            defineField({ name: "label_en", title: "Label (EN)", type: "string" }),
+            defineField({ name: "label_ar", title: "Label (AR)", type: "string" }),
+            defineField({ name: "url", title: "URL / Section ID", type: "string" }),
+          ],
+          preview: {
+            select: { title: "label_fr", subtitle: "url" },
+          },
+        },
+      ],
+    }),
   ],
   preview: {
     prepare() {

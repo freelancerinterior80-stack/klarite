@@ -11,6 +11,7 @@ let successMsg = "";
 
 if (Astro.request.method === "POST") {
   const form = await Astro.request.formData();
+  const action = form.get("_action") as string;
 
   try {
     await writeClient.createIfNotExists({ _id: "headerSettings", _type: "headerSettings" });
@@ -19,30 +20,49 @@ if (Astro.request.method === "POST") {
     const existing = await writeClient.fetch(`*[_id == "headerSettings"][0]`);
     if (!existing?.tagline) {
       await writeClient.patch("headerSettings").setIfMissing({
-        tagline: [{ _key: "fr", value: "" }, { _key: "en", value: "" }, { _key: "ar", value: "" }],
+        tagline:      [{ _key: "fr", value: "" }, { _key: "en", value: "" }, { _key: "ar", value: "" }],
         shopCtaLabel: [{ _key: "fr", value: "" }, { _key: "en", value: "" }, { _key: "ar", value: "" }],
-        skinQuizLabel: [{ _key: "fr", value: "" }, { _key: "en", value: "" }, { _key: "ar", value: "" }],
+        skinQuizLabel:[{ _key: "fr", value: "" }, { _key: "en", value: "" }, { _key: "ar", value: "" }],
       }).commit();
     }
 
-    await writeClient
-      .patch("headerSettings")
-      .set({
-        'tagline[_key=="fr"].value':      form.get("tagline_fr") as string,
-        'tagline[_key=="en"].value':      form.get("tagline_en") as string,
-        'tagline[_key=="ar"].value':      form.get("tagline_ar") as string,
-        'shopCtaLabel[_key=="fr"].value': form.get("shopCtaLabel_fr") as string,
-        'shopCtaLabel[_key=="en"].value': form.get("shopCtaLabel_en") as string,
-        'shopCtaLabel[_key=="ar"].value': form.get("shopCtaLabel_ar") as string,
-        shopCtaUrl:                       form.get("shopCtaUrl") as string,
-        'skinQuizLabel[_key=="fr"].value': form.get("skinQuizLabel_fr") as string,
-        'skinQuizLabel[_key=="en"].value': form.get("skinQuizLabel_en") as string,
-        'skinQuizLabel[_key=="ar"].value': form.get("skinQuizLabel_ar") as string,
-        skinQuizUrl:                       form.get("skinQuizUrl") as string,
-      })
-      .commit();
+    if (action === "save-general") {
+      await writeClient
+        .patch("headerSettings")
+        .set({
+          'tagline[_key=="fr"].value':       form.get("tagline_fr") as string,
+          'tagline[_key=="en"].value':       form.get("tagline_en") as string,
+          'tagline[_key=="ar"].value':       form.get("tagline_ar") as string,
+          'shopCtaLabel[_key=="fr"].value':  form.get("shopCtaLabel_fr") as string,
+          'shopCtaLabel[_key=="en"].value':  form.get("shopCtaLabel_en") as string,
+          'shopCtaLabel[_key=="ar"].value':  form.get("shopCtaLabel_ar") as string,
+          shopCtaUrl:                        form.get("shopCtaUrl") as string,
+          'skinQuizLabel[_key=="fr"].value': form.get("skinQuizLabel_fr") as string,
+          'skinQuizLabel[_key=="en"].value': form.get("skinQuizLabel_en") as string,
+          'skinQuizLabel[_key=="ar"].value': form.get("skinQuizLabel_ar") as string,
+          skinQuizUrl:                       form.get("skinQuizUrl") as string,
+        })
+        .commit();
+      successMsg = "Header settings saved.";
+    }
 
-    successMsg = "Header settings saved.";
+    if (action === "save-nav") {
+      // Collect all nav item rows from form
+      const navItems: any[] = [];
+      let i = 0;
+      while (form.get(`nav_fr_${i}`) !== null || form.get(`nav_url_${i}`) !== null) {
+        const fr  = (form.get(`nav_fr_${i}`)  as string ?? "").trim();
+        const en  = (form.get(`nav_en_${i}`)  as string ?? "").trim();
+        const ar  = (form.get(`nav_ar_${i}`)  as string ?? "").trim();
+        const url = (form.get(`nav_url_${i}`) as string ?? "").trim();
+        if (fr || en || ar || url) {
+          navItems.push({ _key: `nav_${Date.now()}_${i}`, label_fr: fr, label_en: en, label_ar: ar, url });
+        }
+        i++;
+      }
+      await writeClient.patch("headerSettings").set({ navItems }).commit();
+      successMsg = "Navigation links saved.";
+    }
   } catch (e) {
     error = "Save failed. Please try again.";
   }
@@ -51,7 +71,6 @@ if (Astro.request.method === "POST") {
 const raw = await writeClient.fetch(`*[_id == "headerSettings"][0]`);
 const doc = raw ?? {};
 
-// Bootstrap document with empty arrays if it doesn't exist
 if (!raw) {
   await writeClient.createIfNotExists({
     _id: "headerSettings",
@@ -61,18 +80,24 @@ if (!raw) {
     skinQuizLabel:[{ _key: "fr", value: "" }, { _key: "en", value: "" }, { _key: "ar", value: "" }],
   });
 }
+
+const savedNavItems: any[] = Array.isArray(doc.navItems) ? doc.navItems : [];
 ---
 
 <AdminLayout title="Header Settings">
   <div class="mb-8">
     <h1 class="font-display text-3xl text-charcoal">Header Settings</h1>
-    <p class="mt-1 text-sm text-charcoal/55">Control the navigation bar tagline, CTA button, and Skin Quiz link. Leave a field blank to use the default translation.</p>
+    <p class="mt-1 text-sm text-charcoal/55">Control the navigation bar tagline, links, CTA button, and Skin Quiz link. Leave a field blank to use the default translation.</p>
   </div>
 
   {error && <div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm text-red-700">{error}</div>}
   {successMsg && <div class="mb-6 rounded-xl border border-green-200 bg-green-50 px-5 py-3 text-sm text-green-700">{successMsg}</div>}
 
+  <!-- ══════════════════════════════════════════════════════════
+       GENERAL SETTINGS
+       ══════════════════════════════════════════════════════════ -->
   <form method="POST" class="space-y-8">
+    <input type="hidden" name="_action" value="save-general" />
 
     <!-- ── Tagline ──────────────────────────────────────────────── -->
     <div class="rounded-[1.5rem] border border-charcoal/10 bg-white/70 p-7 shadow-[0_8px_30px_rgba(31,37,34,0.06)]">
@@ -84,7 +109,6 @@ if (!raw) {
         <button type="button" data-tab-btn="tagline-en" class="admin-tab-btn">🇬🇧 English</button>
         <button type="button" data-tab-btn="tagline-ar" class="admin-tab-btn">🇸🇦 Arabic</button>
       </div>
-
       <div data-tab-panel="tagline-fr" class="admin-field">
         <label>Tagline (FR)</label>
         <input name="tagline_fr" class="admin-input" value={loc(doc.tagline, "fr")} placeholder="Toucher Doux" />
@@ -109,7 +133,6 @@ if (!raw) {
         <button type="button" data-tab-btn="cta-en" class="admin-tab-btn">🇬🇧 English</button>
         <button type="button" data-tab-btn="cta-ar" class="admin-tab-btn">🇸🇦 Arabic</button>
       </div>
-
       <div data-tab-panel="cta-fr" class="admin-field">
         <label>Button Label (FR)</label>
         <input name="shopCtaLabel_fr" class="admin-input" value={loc(doc.shopCtaLabel, "fr")} placeholder="Découvrir" />
@@ -122,7 +145,6 @@ if (!raw) {
         <label>Button Label (AR)</label>
         <input name="shopCtaLabel_ar" class="admin-input" dir="rtl" value={loc(doc.shopCtaLabel, "ar")} placeholder="تسوّقي" />
       </div>
-
       <div class="mt-5 admin-field max-w-sm">
         <label>Button URL</label>
         <input name="shopCtaUrl" class="admin-input font-mono" value={doc.shopCtaUrl ?? "#signature-products"} placeholder="#signature-products" />
@@ -140,7 +162,6 @@ if (!raw) {
         <button type="button" data-tab-btn="quiz-en" class="admin-tab-btn">🇬🇧 English</button>
         <button type="button" data-tab-btn="quiz-ar" class="admin-tab-btn">🇸🇦 Arabic</button>
       </div>
-
       <div data-tab-panel="quiz-fr" class="admin-field">
         <label>Link Label (FR)</label>
         <input name="skinQuizLabel_fr" class="admin-input" value={loc(doc.skinQuizLabel, "fr")} placeholder="Diagnostic Peau" />
@@ -153,7 +174,6 @@ if (!raw) {
         <label>Link Label (AR)</label>
         <input name="skinQuizLabel_ar" class="admin-input" dir="rtl" value={loc(doc.skinQuizLabel, "ar")} placeholder="اختبار البشرة" />
       </div>
-
       <div class="mt-5 admin-field max-w-sm">
         <label>Link URL</label>
         <input name="skinQuizUrl" class="admin-input font-mono" value={doc.skinQuizUrl ?? "#skin-quiz"} placeholder="#skin-quiz" />
@@ -163,17 +183,78 @@ if (!raw) {
 
     <div class="flex justify-end">
       <button type="submit" class="rounded-xl bg-charcoal px-8 py-2.5 text-sm font-medium text-cream transition hover:bg-charcoal/80">
-        Save Header Settings
+        Save General Settings
+      </button>
+    </div>
+  </form>
+
+  <!-- ══════════════════════════════════════════════════════════
+       NAVIGATION LINKS
+       ══════════════════════════════════════════════════════════ -->
+  <form method="POST" class="mt-8">
+    <input type="hidden" name="_action" value="save-nav" />
+
+    <div class="rounded-[1.5rem] border border-charcoal/10 bg-white/70 p-7 shadow-[0_8px_30px_rgba(31,37,34,0.06)]">
+      <div class="flex items-start justify-between gap-4 mb-2">
+        <div>
+          <h2 class="text-xs font-medium uppercase tracking-wider text-charcoal/50">Navigation Links</h2>
+          <p class="mt-1 text-xs text-charcoal/40">
+            Add or remove nav links. If any links are saved here, they <strong>replace</strong> the defaults (Signature, Bienfaits, Collection…).
+            Delete all rows and save to restore the defaults.
+          </p>
+        </div>
+        <button
+          type="button"
+          id="add-nav-row"
+          class="shrink-0 rounded-xl border border-charcoal/15 bg-white px-4 py-2 text-xs font-medium text-charcoal/70 transition hover:border-charcoal/30 hover:text-charcoal"
+        >
+          + Add Link
+        </button>
+      </div>
+
+      <!-- Column headers -->
+      <div class="mt-6 hidden sm:grid sm:grid-cols-[1fr_1fr_1fr_1.2fr_2rem] gap-3 mb-2 px-1">
+        <p class="text-[0.62rem] uppercase tracking-widest text-charcoal/35">Label FR</p>
+        <p class="text-[0.62rem] uppercase tracking-widest text-charcoal/35">Label EN</p>
+        <p class="text-[0.62rem] uppercase tracking-widest text-charcoal/35">Label AR</p>
+        <p class="text-[0.62rem] uppercase tracking-widest text-charcoal/35">URL / Section ID</p>
+        <p></p>
+      </div>
+
+      <!-- Existing rows (server-rendered) -->
+      <div id="nav-rows" class="space-y-3">
+        {savedNavItems.map((item: any, i: number) => (
+          <div class="nav-row grid grid-cols-1 gap-3 rounded-xl border border-charcoal/8 bg-white/60 p-4 sm:grid-cols-[1fr_1fr_1fr_1.2fr_2rem] sm:items-center sm:p-3">
+            <input name={`nav_fr_${i}`} class="admin-input !py-2 !text-sm" value={item.label_fr ?? ""} placeholder="Signature" />
+            <input name={`nav_en_${i}`} class="admin-input !py-2 !text-sm" value={item.label_en ?? ""} placeholder="Signature" />
+            <input name={`nav_ar_${i}`} class="admin-input !py-2 !text-sm" dir="rtl" value={item.label_ar ?? ""} placeholder="سيقنتشر" />
+            <input name={`nav_url_${i}`} class="admin-input !py-2 !text-sm font-mono" value={item.url ?? ""} placeholder="#signature-products" />
+            <button type="button" class="remove-nav-row flex h-8 w-8 items-center justify-center rounded-lg text-charcoal/30 transition hover:bg-red-50 hover:text-red-500" title="Remove">
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {savedNavItems.length === 0 && (
+        <p id="nav-empty-hint" class="mt-4 rounded-xl border border-dashed border-charcoal/15 py-8 text-center text-xs text-charcoal/35">
+          No custom links saved — the default navigation is used. Click <strong>"+ Add Link"</strong> to override it.
+        </p>
+      )}
+    </div>
+
+    <div class="mt-6 flex justify-end">
+      <button type="submit" class="rounded-xl bg-charcoal px-8 py-2.5 text-sm font-medium text-cream transition hover:bg-charcoal/80">
+        Save Navigation Links
       </button>
     </div>
   </form>
 
   <script>
-    // Tab switching — each card has its own tab group
+    // ── Tab switching ──────────────────────────────────────────
     document.querySelectorAll<HTMLButtonElement>("[data-tab-btn]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const target = btn.dataset.tabBtn!;
-        // Find the group: buttons that share the same prefix (tagline-, cta-, quiz-)
         const prefix = target.replace(/-(?:fr|en|ar)$/, "");
         document.querySelectorAll<HTMLButtonElement>(`[data-tab-btn^="${prefix}-"]`).forEach((b) => {
           b.classList.toggle("active", b === btn);
@@ -182,6 +263,59 @@ if (!raw) {
           p.classList.toggle("hidden", p.dataset.tabPanel !== target);
         });
       });
+    });
+
+    // ── Nav rows: add / remove ─────────────────────────────────
+    const navRowsEl   = document.getElementById("nav-rows")!;
+    const addBtn      = document.getElementById("add-nav-row")!;
+    const emptyHint   = document.getElementById("nav-empty-hint");
+
+    function getNextIndex(): number {
+      return navRowsEl.querySelectorAll(".nav-row").length;
+    }
+
+    function hideEmptyHint() {
+      if (emptyHint) emptyHint.style.display = "none";
+    }
+
+    function buildRow(idx: number): HTMLElement {
+      const div = document.createElement("div");
+      div.className = "nav-row grid grid-cols-1 gap-3 rounded-xl border border-charcoal/8 bg-white/60 p-4 sm:grid-cols-[1fr_1fr_1fr_1.2fr_2rem] sm:items-center sm:p-3";
+      div.innerHTML = `
+        <input name="nav_fr_${idx}" class="admin-input !py-2 !text-sm" placeholder="Signature" />
+        <input name="nav_en_${idx}" class="admin-input !py-2 !text-sm" placeholder="Signature" />
+        <input name="nav_ar_${idx}" class="admin-input !py-2 !text-sm" dir="rtl" placeholder="سيقنتشر" />
+        <input name="nav_url_${idx}" class="admin-input !py-2 !text-sm font-mono" placeholder="#signature-products" />
+        <button type="button" class="remove-nav-row flex h-8 w-8 items-center justify-center rounded-lg text-charcoal/30 transition hover:bg-red-50 hover:text-red-500" title="Remove">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>`;
+      return div;
+    }
+
+    function reindexRows() {
+      navRowsEl.querySelectorAll<HTMLElement>(".nav-row").forEach((row, idx) => {
+        row.querySelectorAll<HTMLInputElement>("input").forEach((input) => {
+          input.name = input.name.replace(/_\d+$/, `_${idx}`);
+        });
+      });
+    }
+
+    function attachRemove(row: HTMLElement) {
+      row.querySelector(".remove-nav-row")?.addEventListener("click", () => {
+        row.remove();
+        reindexRows();
+      });
+    }
+
+    // Attach remove to server-rendered rows
+    navRowsEl.querySelectorAll<HTMLElement>(".nav-row").forEach(attachRemove);
+
+    addBtn.addEventListener("click", () => {
+      hideEmptyHint();
+      const row = buildRow(getNextIndex());
+      attachRemove(row);
+      navRowsEl.appendChild(row);
+      row.querySelector("input")?.focus();
     });
   </script>
 </AdminLayout>
