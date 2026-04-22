@@ -5,7 +5,7 @@ import vercel from "@astrojs/vercel";
 import sanity from "@sanity/astro";
 
 export default defineConfig({
-  output: "hybrid",
+  output: "static",
   adapter: vercel({ webAnalytics: { enabled: false }, imageService: true }),
   integrations: [
     sanity({
