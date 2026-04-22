@@ -7,5 +7,6 @@ import { seoSettingsType } from "./seoSettingsType";
 import { heroSettingsType } from "./heroSettingsType";
 import { footerSettingsType } from "./footerSettingsType";
 import { campaignType } from "./campaignType";
+import { headerSettingsType } from "./headerSettingsType";
 
-export const schemaTypes = [productType, testimonialType, concernType, ritualStepType, trustPointType, seoSettingsType, heroSettingsType, footerSettingsType, campaignType];
+export const schemaTypes = [productType, testimonialType, concernType, ritualStepType, trustPointType, seoSettingsType, heroSettingsType, footerSettingsType, campaignType, headerSettingsType];

@@ -33,7 +33,7 @@ const navItems = [
         KLARITÉ
       </span>
       <span class="hidden h-4 w-px bg-charcoal/18 sm:block"></span>
-      <span class="hidden text-[0.62rem] uppercase tracking-[0.38em] text-charcoal/36 transition-colors duration-300 group-hover:text-charcoal/55 sm:block">
+      <span id="header-tagline" class="hidden text-[0.62rem] uppercase tracking-[0.38em] text-charcoal/36 transition-colors duration-300 group-hover:text-charcoal/55 sm:block">
         {t.nav.tagline}
       </span>
     </a>
@@ -60,6 +60,7 @@ const navItems = [
       <span class="h-5 w-px bg-charcoal/10"></span>
 
       <a
+        id="header-skin-quiz"
         href="#skin-quiz"
         class="text-[0.68rem] uppercase tracking-[0.26em] text-charcoal/50 transition-colors duration-300 hover:text-charcoal"
       >
@@ -67,6 +68,7 @@ const navItems = [
       </a>
 
       <a
+        id="header-shop-cta"
         href="#signature-products"
         class="rounded-full bg-charcoal px-5 py-2.5 text-[0.68rem] uppercase tracking-[0.26em] text-cream shadow-[0_4px_14px_rgba(28,28,28,0.22)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#111] hover:shadow-[0_8px_22px_rgba(28,28,28,0.28)]"
       >
@@ -105,6 +107,7 @@ const navItems = [
     <div class="flex items-center justify-between border-t border-charcoal/8 px-6 py-5 mt-2">
       <LocaleSwitcher currentLocale={locale} />
       <a
+        id="header-shop-cta-mobile"
         href="#signature-products"
         class="mobile-nav-link rounded-full bg-charcoal px-5 py-2.5 text-[0.68rem] uppercase tracking-[0.26em] text-cream"
       >
@@ -113,6 +116,30 @@ const navItems = [
     </div>
   </div>
 </header>
+
+<script is:inline>
+  (function () {
+    var locale = document.documentElement.lang || "fr";
+    fetch("/api/header-settings.json?locale=" + locale)
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d) return;
+        var tagline   = document.getElementById("header-tagline");
+        var skinQuiz  = document.getElementById("header-skin-quiz");
+        var shopCta   = document.getElementById("header-shop-cta");
+        var shopCtaM  = document.getElementById("header-shop-cta-mobile");
+
+        if (d.tagline      && tagline)  tagline.textContent  = d.tagline;
+        if (d.skinQuizLabel && skinQuiz) skinQuiz.textContent = d.skinQuizLabel;
+        if (d.skinQuizUrl  && skinQuiz) skinQuiz.setAttribute("href", d.skinQuizUrl);
+        if (d.shopCtaLabel && shopCta)  shopCta.textContent  = d.shopCtaLabel;
+        if (d.shopCtaUrl   && shopCta)  shopCta.setAttribute("href", d.shopCtaUrl);
+        if (d.shopCtaLabel && shopCtaM) shopCtaM.textContent = d.shopCtaLabel;
+        if (d.shopCtaUrl   && shopCtaM) shopCtaM.setAttribute("href", d.shopCtaUrl);
+      })
+      .catch(function () {});
+  })();
+</script>
 
 <style>
   /* Active nav link state — toggled by JS scroll spy */

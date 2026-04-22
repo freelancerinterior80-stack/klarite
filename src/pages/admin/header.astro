@@ -1,0 +1,187 @@
+---
+export const prerender = false;
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { writeClient } from "@/sanity/write-client";
+
+const loc = (arr: any[] | null | undefined, key: string) =>
+  arr?.find((i: any) => i._key === key)?.value ?? "";
+
+let error = "";
+let successMsg = "";
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+
+  try {
+    await writeClient.createIfNotExists({ _id: "headerSettings", _type: "headerSettings" });
+
+    // Ensure localized arrays exist first
+    const existing = await writeClient.fetch(`*[_id == "headerSettings"][0]`);
+    if (!existing?.tagline) {
+      await writeClient.patch("headerSettings").setIfMissing({
+        tagline: [{ _key: "fr", value: "" }, { _key: "en", value: "" }, { _key: "ar", value: "" }],
+        shopCtaLabel: [{ _key: "fr", value: "" }, { _key: "en", value: "" }, { _key: "ar", value: "" }],
+        skinQuizLabel: [{ _key: "fr", value: "" }, { _key: "en", value: "" }, { _key: "ar", value: "" }],
+      }).commit();
+    }
+
+    await writeClient
+      .patch("headerSettings")
+      .set({
+        'tagline[_key=="fr"].value':      form.get("tagline_fr") as string,
+        'tagline[_key=="en"].value':      form.get("tagline_en") as string,
+        'tagline[_key=="ar"].value':      form.get("tagline_ar") as string,
+        'shopCtaLabel[_key=="fr"].value': form.get("shopCtaLabel_fr") as string,
+        'shopCtaLabel[_key=="en"].value': form.get("shopCtaLabel_en") as string,
+        'shopCtaLabel[_key=="ar"].value': form.get("shopCtaLabel_ar") as string,
+        shopCtaUrl:                       form.get("shopCtaUrl") as string,
+        'skinQuizLabel[_key=="fr"].value': form.get("skinQuizLabel_fr") as string,
+        'skinQuizLabel[_key=="en"].value': form.get("skinQuizLabel_en") as string,
+        'skinQuizLabel[_key=="ar"].value': form.get("skinQuizLabel_ar") as string,
+        skinQuizUrl:                       form.get("skinQuizUrl") as string,
+      })
+      .commit();
+
+    successMsg = "Header settings saved.";
+  } catch (e) {
+    error = "Save failed. Please try again.";
+  }
+}
+
+const raw = await writeClient.fetch(`*[_id == "headerSettings"][0]`);
+const doc = raw ?? {};
+
+// Bootstrap document with empty arrays if it doesn't exist
+if (!raw) {
+  await writeClient.createIfNotExists({
+    _id: "headerSettings",
+    _type: "headerSettings",
+    tagline:      [{ _key: "fr", value: "" }, { _key: "en", value: "" }, { _key: "ar", value: "" }],
+    shopCtaLabel: [{ _key: "fr", value: "" }, { _key: "en", value: "" }, { _key: "ar", value: "" }],
+    skinQuizLabel:[{ _key: "fr", value: "" }, { _key: "en", value: "" }, { _key: "ar", value: "" }],
+  });
+}
+---
+
+<AdminLayout title="Header Settings">
+  <div class="mb-8">
+    <h1 class="font-display text-3xl text-charcoal">Header Settings</h1>
+    <p class="mt-1 text-sm text-charcoal/55">Control the navigation bar tagline, CTA button, and Skin Quiz link. Leave a field blank to use the default translation.</p>
+  </div>
+
+  {error && <div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm text-red-700">{error}</div>}
+  {successMsg && <div class="mb-6 rounded-xl border border-green-200 bg-green-50 px-5 py-3 text-sm text-green-700">{successMsg}</div>}
+
+  <form method="POST" class="space-y-8">
+
+    <!-- ── Tagline ──────────────────────────────────────────────── -->
+    <div class="rounded-[1.5rem] border border-charcoal/10 bg-white/70 p-7 shadow-[0_8px_30px_rgba(31,37,34,0.06)]">
+      <h2 class="mb-1 text-xs font-medium uppercase tracking-wider text-charcoal/50">Tagline</h2>
+      <p class="mb-6 text-xs text-charcoal/40">Short phrase displayed beside the KLARITÉ logo. Default: "Toucher Doux".</p>
+
+      <div class="flex gap-0 border-b border-charcoal/10 mb-7">
+        <button type="button" data-tab-btn="tagline-fr" class="admin-tab-btn active">🇫🇷 French</button>
+        <button type="button" data-tab-btn="tagline-en" class="admin-tab-btn">🇬🇧 English</button>
+        <button type="button" data-tab-btn="tagline-ar" class="admin-tab-btn">🇸🇦 Arabic</button>
+      </div>
+
+      <div data-tab-panel="tagline-fr" class="admin-field">
+        <label>Tagline (FR)</label>
+        <input name="tagline_fr" class="admin-input" value={loc(doc.tagline, "fr")} placeholder="Toucher Doux" />
+      </div>
+      <div data-tab-panel="tagline-en" class="hidden admin-field">
+        <label>Tagline (EN)</label>
+        <input name="tagline_en" class="admin-input" value={loc(doc.tagline, "en")} placeholder="Gentle Touch" />
+      </div>
+      <div data-tab-panel="tagline-ar" class="hidden admin-field">
+        <label>Tagline (AR)</label>
+        <input name="tagline_ar" class="admin-input" dir="rtl" value={loc(doc.tagline, "ar")} placeholder="لمسة ناعمة" />
+      </div>
+    </div>
+
+    <!-- ── Shop CTA Button ─────────────────────────────────────── -->
+    <div class="rounded-[1.5rem] border border-charcoal/10 bg-white/70 p-7 shadow-[0_8px_30px_rgba(31,37,34,0.06)]">
+      <h2 class="mb-1 text-xs font-medium uppercase tracking-wider text-charcoal/50">Shop CTA Button</h2>
+      <p class="mb-6 text-xs text-charcoal/40">The dark pill button on the right of the header. Default label: "Découvrir".</p>
+
+      <div class="flex gap-0 border-b border-charcoal/10 mb-7">
+        <button type="button" data-tab-btn="cta-fr" class="admin-tab-btn active">🇫🇷 French</button>
+        <button type="button" data-tab-btn="cta-en" class="admin-tab-btn">🇬🇧 English</button>
+        <button type="button" data-tab-btn="cta-ar" class="admin-tab-btn">🇸🇦 Arabic</button>
+      </div>
+
+      <div data-tab-panel="cta-fr" class="admin-field">
+        <label>Button Label (FR)</label>
+        <input name="shopCtaLabel_fr" class="admin-input" value={loc(doc.shopCtaLabel, "fr")} placeholder="Découvrir" />
+      </div>
+      <div data-tab-panel="cta-en" class="hidden admin-field">
+        <label>Button Label (EN)</label>
+        <input name="shopCtaLabel_en" class="admin-input" value={loc(doc.shopCtaLabel, "en")} placeholder="Shop Now" />
+      </div>
+      <div data-tab-panel="cta-ar" class="hidden admin-field">
+        <label>Button Label (AR)</label>
+        <input name="shopCtaLabel_ar" class="admin-input" dir="rtl" value={loc(doc.shopCtaLabel, "ar")} placeholder="تسوّقي" />
+      </div>
+
+      <div class="mt-5 admin-field max-w-sm">
+        <label>Button URL</label>
+        <input name="shopCtaUrl" class="admin-input font-mono" value={doc.shopCtaUrl ?? "#signature-products"} placeholder="#signature-products" />
+        <p class="mt-1 text-xs text-charcoal/35">Use a #section-id or a full URL</p>
+      </div>
+    </div>
+
+    <!-- ── Skin Quiz Link ──────────────────────────────────────── -->
+    <div class="rounded-[1.5rem] border border-charcoal/10 bg-white/70 p-7 shadow-[0_8px_30px_rgba(31,37,34,0.06)]">
+      <h2 class="mb-1 text-xs font-medium uppercase tracking-wider text-charcoal/50">Skin Quiz Link</h2>
+      <p class="mb-6 text-xs text-charcoal/40">The text link beside the CTA button. Default label: "Diagnostic Peau".</p>
+
+      <div class="flex gap-0 border-b border-charcoal/10 mb-7">
+        <button type="button" data-tab-btn="quiz-fr" class="admin-tab-btn active">🇫🇷 French</button>
+        <button type="button" data-tab-btn="quiz-en" class="admin-tab-btn">🇬🇧 English</button>
+        <button type="button" data-tab-btn="quiz-ar" class="admin-tab-btn">🇸🇦 Arabic</button>
+      </div>
+
+      <div data-tab-panel="quiz-fr" class="admin-field">
+        <label>Link Label (FR)</label>
+        <input name="skinQuizLabel_fr" class="admin-input" value={loc(doc.skinQuizLabel, "fr")} placeholder="Diagnostic Peau" />
+      </div>
+      <div data-tab-panel="quiz-en" class="hidden admin-field">
+        <label>Link Label (EN)</label>
+        <input name="skinQuizLabel_en" class="admin-input" value={loc(doc.skinQuizLabel, "en")} placeholder="Skin Quiz" />
+      </div>
+      <div data-tab-panel="quiz-ar" class="hidden admin-field">
+        <label>Link Label (AR)</label>
+        <input name="skinQuizLabel_ar" class="admin-input" dir="rtl" value={loc(doc.skinQuizLabel, "ar")} placeholder="اختبار البشرة" />
+      </div>
+
+      <div class="mt-5 admin-field max-w-sm">
+        <label>Link URL</label>
+        <input name="skinQuizUrl" class="admin-input font-mono" value={doc.skinQuizUrl ?? "#skin-quiz"} placeholder="#skin-quiz" />
+        <p class="mt-1 text-xs text-charcoal/35">Use a #section-id or a full URL</p>
+      </div>
+    </div>
+
+    <div class="flex justify-end">
+      <button type="submit" class="rounded-xl bg-charcoal px-8 py-2.5 text-sm font-medium text-cream transition hover:bg-charcoal/80">
+        Save Header Settings
+      </button>
+    </div>
+  </form>
+
+  <script>
+    // Tab switching — each card has its own tab group
+    document.querySelectorAll<HTMLButtonElement>("[data-tab-btn]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const target = btn.dataset.tabBtn!;
+        // Find the group: buttons that share the same prefix (tagline-, cta-, quiz-)
+        const prefix = target.replace(/-(?:fr|en|ar)$/, "");
+        document.querySelectorAll<HTMLButtonElement>(`[data-tab-btn^="${prefix}-"]`).forEach((b) => {
+          b.classList.toggle("active", b === btn);
+        });
+        document.querySelectorAll<HTMLElement>(`[data-tab-panel^="${prefix}-"]`).forEach((p) => {
+          p.classList.toggle("hidden", p.dataset.tabPanel !== target);
+        });
+      });
+    });
+  </script>
+</AdminLayout>
