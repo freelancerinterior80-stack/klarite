@@ -8,7 +8,7 @@ const translations = { fr, en, ar } as const;
 export type TranslationKeys = typeof fr;
 
 export function getTranslations(locale: Locale): TranslationKeys {
-  return translations[locale] ?? translations.fr;
+  return (translations[locale] ?? translations.fr) as TranslationKeys;
 }
 
 export function localizedPath(path: string, locale: Locale): string {
