@@ -1,0 +1,325 @@
+---
+export const prerender = false;
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { writeClient } from "@/sanity/write-client";
+
+const LOCALES = ["fr", "en", "ar"] as const;
+const { id } = Astro.params as { id: string };
+
+const loc = (arr: any[] | null | undefined, key: string) =>
+  arr?.find((i: any) => i._key === key)?.value ?? "";
+
+let error = "";
+let successMsg = "";
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  const action = (form.get("_action") as string) ?? "save-details";
+
+  try {
+    // ── Details ──────────────────────────────────────────────────────
+    if (action === "save-details") {
+      await writeClient.patch(id).set({
+        title:    form.get("title")    as string,
+        isActive: form.get("isActive") === "true",
+      }).commit();
+      successMsg = "Campaign details saved.";
+    }
+
+    // ── Upload slide image (0, 1, or 2) ──────────────────────────────
+    else if (action.startsWith("upload-slide-")) {
+      const idx = parseInt(action.replace("upload-slide-", ""), 10);
+      const file = form.get("image") as File;
+      if (file && file.size > 0) {
+        const buffer = Buffer.from(await file.arrayBuffer());
+        const asset = await writeClient.assets.upload("image", buffer, {
+          filename: file.name,
+          contentType: file.type,
+        });
+
+        // Fetch existing slides array and patch slot idx
+        const current = await writeClient.fetch(`*[_id == $id][0]{ slides }`, { id });
+        const slides: any[] = Array.isArray(current?.slides) ? [...current.slides] : [];
+
+        // Ensure the slot exists
+        while (slides.length <= idx) {
+          slides.push({
+            _type: "slide",
+            _key: `slide${slides.length}`,
+          });
+        }
+        slides[idx] = {
+          ...slides[idx],
+          image: { _type: "image", asset: { _type: "reference", _ref: asset._id } },
+        };
+        await writeClient.patch(id).set({ slides }).commit();
+        successMsg = `Slide ${idx + 1} image uploaded.`;
+      }
+    }
+
+    // ── Save slide text content ───────────────────────────────────────
+    else if (action === "save-slides-text") {
+      const current = await writeClient.fetch(`*[_id == $id][0]{ slides }`, { id });
+      const slides: any[] = Array.isArray(current?.slides) ? JSON.parse(JSON.stringify(current.slides)) : [];
+
+      for (let i = 0; i < 3; i++) {
+        while (slides.length <= i) {
+          slides.push({ _type: "slide", _key: `slide${slides.length}` });
+        }
+
+        const buildLocale = (field: string) =>
+          LOCALES.map((k) => ({ _key: k, value: (form.get(`${field}_${i}_${k}`) as string) ?? "" }));
+
+        slides[i] = {
+          ...slides[i],
+          headline: buildLocale("headline"),
+          subtext:  buildLocale("subtext"),
+          ctaLabel: buildLocale("ctaLabel"),
+          ctaUrl:           (form.get(`ctaUrl_${i}`) as string) ?? "",
+          overlayOpacity: parseInt((form.get(`overlayOpacity_${i}`) as string) ?? "40", 10),
+        };
+      }
+
+      // Remove trailing empty slides (no image, no text)
+      const cleaned = slides.filter((s: any) => {
+        if (s.image?.asset?._ref) return true;
+        const hasText = LOCALES.some((k) =>
+          ["headline", "subtext", "ctaLabel"].some((f) =>
+            s[f]?.find((l: any) => l._key === k)?.value?.trim()
+          )
+        );
+        return hasText;
+      });
+
+      await writeClient.patch(id).set({ slides: cleaned }).commit();
+      successMsg = "Slide content saved.";
+    }
+  } catch (e) {
+    error = "Save failed. Please try again.";
+  }
+}
+
+// Fetch current doc
+const doc = await writeClient.fetch(
+  `*[_id == $id][0]{ _id, title, isActive, slides[]{ ..., "imageUrl": image.asset->url } }`,
+  { id }
+);
+
+if (!doc) {
+  return Astro.redirect("/admin/campaigns");
+}
+
+const slides: any[] = Array.isArray(doc.slides) ? doc.slides : [];
+// Ensure we always show 3 slots
+const slideSlots = [0, 1, 2].map((i) => slides[i] ?? null);
+---
+
+<AdminLayout title="Edit Campaign">
+  <div class="mb-8 flex items-start justify-between">
+    <div>
+      <a href="/admin/campaigns" class="text-xs text-charcoal/45 hover:text-charcoal transition">← Back to Campaigns</a>
+      <h1 class="mt-3 font-display text-3xl text-charcoal">{doc.title}</h1>
+    </div>
+    <span class:list={[
+      "mt-5 rounded-full px-3 py-1 text-[0.68rem] font-medium uppercase tracking-wider border",
+      doc.isActive
+        ? "bg-emerald-100 text-emerald-700 border-emerald-200"
+        : "bg-charcoal/8 text-charcoal/50 border-charcoal/10",
+    ]}>
+      {doc.isActive ? "Active" : "Inactive"}
+    </span>
+  </div>
+
+  {error     && <div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm text-red-700">{error}</div>}
+  {successMsg && <div class="mb-6 rounded-xl border border-green-200 bg-green-50 px-5 py-3 text-sm text-green-700">{successMsg}</div>}
+
+  <!-- ── Campaign Details ──────────────────────────────────────────── -->
+  <div class="mb-8 rounded-[1.5rem] border border-charcoal/10 bg-white/70 p-7 shadow-[0_8px_30px_rgba(31,37,34,0.06)]">
+    <h2 class="mb-5 text-xs font-medium uppercase tracking-wider text-charcoal/50">Campaign Details</h2>
+    <form method="POST" class="space-y-5">
+      <input type="hidden" name="_action" value="save-details" />
+
+      <div class="admin-field max-w-lg">
+        <label>Campaign Name (internal)</label>
+        <input name="title" class="admin-input" value={doc.title ?? ""} required />
+      </div>
+
+      <!-- Active toggle — prominent -->
+      <div class="flex items-center gap-4 rounded-xl border border-charcoal/10 bg-charcoal/[0.03] px-5 py-4">
+        <div class="flex-1">
+          <p class="text-sm font-medium text-charcoal">Show on site</p>
+          <p class="text-xs text-charcoal/50 mt-0.5">When active, this campaign replaces the hero section. Deactivate all other campaigns first.</p>
+        </div>
+        <label class="relative inline-flex cursor-pointer items-center gap-3">
+          <span class="text-xs text-charcoal/50">Off</span>
+          <div class="relative">
+            <input
+              type="checkbox"
+              name="isActive"
+              value="true"
+              checked={doc.isActive}
+              class="peer sr-only"
+              id="isActive"
+            />
+            <div class="h-6 w-11 rounded-full bg-charcoal/20 peer-checked:bg-charcoal transition-colors"></div>
+            <div class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform peer-checked:translate-x-5"></div>
+          </div>
+          <span class="text-xs text-charcoal/50">On</span>
+        </label>
+      </div>
+
+      <!-- Hidden field so unchecked checkbox still sends "false" -->
+      <script>
+        document.querySelector('form [name="isActive"]')?.closest("form")?.addEventListener("submit", function(e) {
+          const cb = this.querySelector('[name="isActive"]') as HTMLInputElement;
+          if (cb && !cb.checked) {
+            const hidden = document.createElement("input");
+            hidden.type = "hidden";
+            hidden.name = "isActive";
+            hidden.value = "false";
+            this.appendChild(hidden);
+            cb.name = "_isActive_cb";
+          }
+        });
+      </script>
+
+      <div class="flex justify-end">
+        <button type="submit" class="rounded-xl bg-charcoal px-8 py-2.5 text-sm font-medium text-cream transition hover:bg-charcoal/80">
+          Save Details
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ── Slides ────────────────────────────────────────────────────── -->
+  <div class="rounded-[1.5rem] border border-charcoal/10 bg-white/70 p-7 shadow-[0_8px_30px_rgba(31,37,34,0.06)]">
+    <h2 class="mb-1 text-xs font-medium uppercase tracking-wider text-charcoal/50">Slides</h2>
+    <p class="mb-7 text-xs text-charcoal/40">Add up to 3 slides. Upload images first, then fill in the text below and click Save Slide Content.</p>
+
+    <!-- Image upload forms (one per slot) -->
+    <div class="mb-8 grid gap-4 sm:grid-cols-3">
+      {slideSlots.map((slide, i) => (
+        <div class="rounded-[1.1rem] border border-charcoal/10 bg-charcoal/[0.02] p-4">
+          <p class="mb-3 text-[0.7rem] font-medium uppercase tracking-wider text-charcoal/45">Slide {i + 1}</p>
+          {slide?.imageUrl ? (
+            <img src={slide.imageUrl + "?w=400&h=200&fit=crop&auto=format"} alt={`Slide ${i+1}`} class="mb-3 h-28 w-full rounded-lg object-cover" />
+          ) : (
+            <div class="mb-3 flex h-28 w-full items-center justify-center rounded-lg bg-charcoal/6 text-xs text-charcoal/30">No image</div>
+          )}
+          <form method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="_action" value={`upload-slide-${i}`} />
+            <label class="block">
+              <span class="sr-only">Upload image for slide {i+1}</span>
+              <input
+                type="file"
+                name="image"
+                accept="image/*"
+                class="block w-full text-xs text-charcoal/50 file:mr-3 file:rounded-lg file:border-0 file:bg-charcoal file:px-3 file:py-1.5 file:text-xs file:text-cream file:cursor-pointer"
+              />
+            </label>
+            <button type="submit" class="mt-2 w-full rounded-lg border border-charcoal/15 bg-white/70 py-1.5 text-xs font-medium text-charcoal transition hover:bg-white">
+              Upload Image
+            </button>
+          </form>
+        </div>
+      ))}
+    </div>
+
+    <!-- Text content form -->
+    <form method="POST">
+      <input type="hidden" name="_action" value="save-slides-text" />
+
+      <div class="space-y-8">
+        {slideSlots.map((slide, i) => (
+          <div data-tab-card class="rounded-[1.1rem] border border-charcoal/10 p-5">
+            <p class="mb-4 text-[0.7rem] font-medium uppercase tracking-wider text-charcoal/45">Slide {i + 1} — Text Content</p>
+
+            <!-- Locale tabs -->
+            <div class="flex gap-0 border-b border-charcoal/10 mb-6">
+              <button type="button" data-tab-btn={`slide${i}-fr`} class="admin-tab-btn active">🇫🇷 French</button>
+              <button type="button" data-tab-btn={`slide${i}-en`} class="admin-tab-btn">🇬🇧 English</button>
+              <button type="button" data-tab-btn={`slide${i}-ar`} class="admin-tab-btn">🇸🇦 Arabic</button>
+            </div>
+
+            {(["fr", "en", "ar"] as const).map((lang, li) => (
+              <div data-tab-panel={`slide${i}-${lang}`} class:list={["space-y-4", li > 0 && "hidden"]}>
+                <div class="admin-field">
+                  <label>Headline ({lang.toUpperCase()})</label>
+                  <textarea
+                    name={`headline_${i}_${lang}`}
+                    rows="2"
+                    class="admin-input"
+                    dir={lang === "ar" ? "rtl" : "ltr"}
+                    placeholder="Campaign headline"
+                  >{loc(slide?.headline, lang)}</textarea>
+                </div>
+                <div class="admin-field">
+                  <label>Sub-text ({lang.toUpperCase()})</label>
+                  <textarea
+                    name={`subtext_${i}_${lang}`}
+                    rows="2"
+                    class="admin-input"
+                    dir={lang === "ar" ? "rtl" : "ltr"}
+                    placeholder="Short supporting text"
+                  >{loc(slide?.subtext, lang)}</textarea>
+                </div>
+                <div class="admin-field">
+                  <label>Button Label ({lang.toUpperCase()})</label>
+                  <input
+                    name={`ctaLabel_${i}_${lang}`}
+                    class="admin-input"
+                    dir={lang === "ar" ? "rtl" : "ltr"}
+                    value={loc(slide?.ctaLabel, lang)}
+                    placeholder='e.g. "Découvrir"'
+                  />
+                </div>
+              </div>
+            ))}
+
+            <!-- Non-localized fields -->
+            <div class="mt-5 grid gap-4 sm:grid-cols-2">
+              <div class="admin-field">
+                <label>Button URL</label>
+                <input
+                  name={`ctaUrl_${i}`}
+                  class="admin-input font-mono text-sm"
+                  value={slide?.ctaUrl ?? ""}
+                  placeholder='e.g. #collection'
+                />
+              </div>
+              <div class="admin-field">
+                <label>Overlay Darkness (0–100)</label>
+                <input
+                  type="number"
+                  name={`overlayOpacity_${i}`}
+                  class="admin-input"
+                  min="0"
+                  max="100"
+                  value={slide?.overlayOpacity ?? 40}
+                />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div class="mt-6 flex justify-end">
+        <button type="submit" class="rounded-xl bg-charcoal px-8 py-2.5 text-sm font-medium text-cream transition hover:bg-charcoal/80">
+          Save Slide Content
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    document.querySelectorAll<HTMLButtonElement>("[data-tab-btn]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const group = btn.dataset.tabBtn!.replace(/-(?:fr|en|ar)$/, "");
+        document.querySelectorAll<HTMLButtonElement>(`[data-tab-btn^="${group}-"]`)
+          .forEach((b) => b.classList.toggle("active", b === btn));
+        document.querySelectorAll<HTMLDivElement>(`[data-tab-panel^="${group}-"]`)
+          .forEach((p) => p.classList.toggle("hidden", p.dataset.tabPanel !== btn.dataset.tabBtn));
+      });
+    });
+  </script>
+</AdminLayout>

@@ -1,0 +1,61 @@
+---
+export const prerender = false;
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { writeClient } from "@/sanity/write-client";
+
+const campaigns = await writeClient.fetch(
+  `*[_type == "campaign"] | order(_createdAt desc) { _id, title, isActive, "slideCount": count(slides) }`
+);
+
+const activeCount = campaigns.filter((c: any) => c.isActive).length;
+---
+
+<AdminLayout title="Campaigns">
+  <div class="mb-8 flex items-start justify-between">
+    <div>
+      <h1 class="font-display text-3xl text-charcoal">Campaigns</h1>
+      <p class="mt-1 text-sm text-charcoal/55">Promotional banners that replace the hero section. Activate one at a time.</p>
+    </div>
+    <a href="/admin/campaigns/new" class="rounded-xl bg-charcoal px-5 py-2.5 text-xs font-medium text-cream transition hover:bg-charcoal/80">
+      + New Campaign
+    </a>
+  </div>
+
+  {activeCount > 1 && (
+    <div class="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-5 py-3 text-sm text-amber-800">
+      ⚠️ Multiple campaigns are active. Only the most recently created one will show on the site. Deactivate the others.
+    </div>
+  )}
+
+  {campaigns.length === 0 ? (
+    <div class="rounded-[1.5rem] border border-charcoal/10 bg-white/60 px-8 py-16 text-center">
+      <p class="text-sm text-charcoal/50">No campaigns yet.</p>
+      <a href="/admin/campaigns/new" class="mt-4 inline-block rounded-xl bg-charcoal px-6 py-2.5 text-xs font-medium text-cream transition hover:bg-charcoal/80">Create your first campaign</a>
+    </div>
+  ) : (
+    <div class="space-y-3">
+      {campaigns.map((c: any) => (
+        <div class="flex items-center gap-5 rounded-[1.25rem] border border-charcoal/10 bg-white/70 px-6 py-4 shadow-sm">
+          <div class="flex-1 min-w-0">
+            <p class="font-semibold text-charcoal truncate">{c.title}</p>
+            <p class="mt-0.5 text-xs text-charcoal/45">{c.slideCount ?? 0} slide{c.slideCount !== 1 ? "s" : ""}</p>
+          </div>
+          <span class:list={[
+            "shrink-0 rounded-full px-3 py-1 text-[0.68rem] font-medium uppercase tracking-wider",
+            c.isActive
+              ? "bg-emerald-100 text-emerald-700 border border-emerald-200"
+              : "bg-charcoal/8 text-charcoal/50 border border-charcoal/10",
+          ]}>
+            {c.isActive ? "Active" : "Inactive"}
+          </span>
+          <a
+            href={`/admin/campaigns/${c._id}`}
+            class="shrink-0 rounded-xl border border-charcoal/15 bg-white px-4 py-2 text-xs font-medium text-charcoal transition hover:bg-charcoal/5"
+          >
+            Edit
+          </a>
+        </div>
+      ))}
+    </div>
+  )}
+</AdminLayout>

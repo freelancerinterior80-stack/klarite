@@ -136,10 +136,15 @@ const benefits = [
   }}
 >
   <!-- ══════════════════════════════════════════════════════════════
+       CAMPAIGN BANNER — shown when a campaign is active
+       ══════════════════════════════════════════════════════════════ -->
+  <div id="campaign-banner" class="campaign-slider hidden" aria-label="Promotional campaign" role="region"></div>
+
+  <!-- ══════════════════════════════════════════════════════════════
        HERO — full-viewport, two-column editorial layout
        ══════════════════════════════════════════════════════════════ -->
   <section
-    id="collection"
+    id="hero-section"
     class="section-band section-band--first section-band--cream relative flex min-h-[100dvh] flex-col justify-center px-4 pb-16 pt-10 sm:px-6 lg:px-10 lg:pb-20 lg:pt-14"
   >
     <!-- Ambient background glow -->
@@ -271,6 +276,104 @@ const benefits = [
 
     </div>
   </section>
+
+  <!-- Campaign banner client script -->
+  <script define:vars={{ locale }}>
+    (function () {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+      fetch("/api/active-campaign.json?locale=" + locale)
+        .then(function (r) { return r.json(); })
+        .then(function (campaign) {
+          if (!campaign || !Array.isArray(campaign.slides) || campaign.slides.length === 0) return;
+
+          var slides = campaign.slides.filter(function (s) { return s.imageUrl; });
+          if (slides.length === 0) return;
+
+          var banner = document.getElementById("campaign-banner");
+          var hero = document.getElementById("hero-section");
+          if (!banner || !hero) return;
+
+          // Build slides HTML
+          var slidesHtml = slides.map(function (slide, i) {
+            var opacity = typeof slide.overlayOpacity === "number" ? slide.overlayOpacity / 100 : 0.4;
+            return [
+              '<div class="campaign-slide' + (i === 0 ? " active" : "") + '"',
+              ' style="background-image:url(\'' + slide.imageUrl + '?w=1600&auto=format\')">',
+              '<div class="campaign-slide__overlay" style="background:rgba(0,0,0,' + opacity + ');"></div>',
+              '<div class="campaign-slide__content">',
+              '<p class="campaign-slide__eyebrow">KLARITÉ</p>',
+              slide.headline ? '<h2 class="campaign-slide__headline">' + slide.headline + '</h2>' : '',
+              slide.subtext  ? '<p class="campaign-slide__subtext">' + slide.subtext + '</p>' : '',
+              slide.ctaLabel && slide.ctaUrl
+                ? '<a href="' + slide.ctaUrl + '" class="cta-primary">' + slide.ctaLabel + '</a>'
+                : '',
+              '</div>',
+              '</div>',
+            ].join("");
+          }).join("");
+
+          // Nav arrows (only if >1 slide)
+          var navHtml = slides.length > 1 ? [
+            '<button class="campaign-nav-btn campaign-nav-prev" aria-label="Previous slide">',
+            '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>',
+            '</button>',
+            '<button class="campaign-nav-btn campaign-nav-next" aria-label="Next slide">',
+            '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>',
+            '</button>',
+          ].join("") : "";
+
+          // Dots
+          var dotsHtml = slides.length > 1
+            ? '<div class="campaign-dots">' + slides.map(function (_, i) {
+                return '<button class="campaign-dot' + (i === 0 ? " active" : "") + '" aria-label="Slide ' + (i + 1) + '"></button>';
+              }).join("") + '</div>'
+            : "";
+
+          banner.innerHTML = slidesHtml + navHtml + dotsHtml;
+
+          // Show campaign, hide hero
+          hero.classList.add("hidden");
+          banner.classList.remove("hidden");
+
+          // Slider logic
+          if (slides.length <= 1) return;
+
+          var current = 0;
+          var slideEls = banner.querySelectorAll(".campaign-slide");
+          var dotEls   = banner.querySelectorAll(".campaign-dot");
+
+          function goTo(idx) {
+            slideEls[current].classList.remove("active");
+            dotEls[current].classList.remove("active");
+            current = (idx + slides.length) % slides.length;
+            slideEls[current].classList.add("active");
+            dotEls[current].classList.add("active");
+          }
+
+          var timer = setInterval(function () { goTo(current + 1); }, 5000);
+
+          banner.querySelector(".campaign-nav-next").addEventListener("click", function () {
+            clearInterval(timer);
+            goTo(current + 1);
+            timer = setInterval(function () { goTo(current + 1); }, 5000);
+          });
+          banner.querySelector(".campaign-nav-prev").addEventListener("click", function () {
+            clearInterval(timer);
+            goTo(current - 1);
+            timer = setInterval(function () { goTo(current + 1); }, 5000);
+          });
+          dotEls.forEach(function (dot, i) {
+            dot.addEventListener("click", function () {
+              clearInterval(timer);
+              goTo(i);
+              timer = setInterval(function () { goTo(current + 1); }, 5000);
+            });
+          });
+        })
+        .catch(function () { /* silently fall through to hero */ });
+    })();
+  </script>
 
   <!-- ── Trust bar ─────────────────────────────────────────────────── -->
   <TrustBar trustPoints={[

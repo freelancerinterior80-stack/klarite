@@ -8,10 +8,23 @@ const counts = await writeClient.fetch(`{
   "testimonials": count(*[_type == "testimonial"]),
   "concerns":     count(*[_type == "concern"]),
   "ritualSteps":  count(*[_type == "ritualStep"]),
-  "trustPoints":  count(*[_type == "trustPoint"])
+  "trustPoints":  count(*[_type == "trustPoint"]),
+  "campaigns":    count(*[_type == "campaign"])
 }`);
 
 const sections = [
+  {
+    label: "Campaigns",
+    count: counts.campaigns,
+    href: "/admin/campaigns",
+    newHref: "/admin/campaigns/new",
+    desc: "Promotional sliders that replace the hero section",
+    color: "from-fuchsia-50 to-purple-50",
+    border: "border-fuchsia-200/60",
+    iconBg: "bg-fuchsia-100",
+    iconColor: "text-fuchsia-700",
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>`,
+  },
   {
     label: "Products",
     count: counts.products,
