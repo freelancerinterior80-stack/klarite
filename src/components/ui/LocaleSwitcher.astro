@@ -1,0 +1,39 @@
+---
+import { LOCALES, LOCALE_SHORT, type Locale } from "@/i18n/config";
+
+interface Props {
+  currentLocale: Locale;
+  class?: string;
+}
+
+const { currentLocale, class: className = "" } = Astro.props;
+---
+
+<div class={`locale-switcher flex items-center gap-2 text-xs tracking-[0.2em] uppercase ${className}`}>
+  {LOCALES.map((locale, i) => (
+    <>
+      <a
+        href={`/${locale}/`}
+        data-locale={locale}
+        class:list={[
+          "transition-opacity hover:opacity-100 locale-link",
+          currentLocale === locale ? "opacity-100 text-[color:var(--color-gold)]" : "opacity-50"
+        ]}
+      >
+        {LOCALE_SHORT[locale]}
+      </a>
+      {i < LOCALES.length - 1 && <span class="opacity-30">·</span>}
+    </>
+  ))}
+</div>
+
+<script>
+  document.querySelectorAll<HTMLAnchorElement>(".locale-link").forEach(link => {
+    link.addEventListener("click", () => {
+      const locale = link.dataset.locale;
+      if (locale) {
+        document.cookie = `klarite_locale=${locale}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`;
+      }
+    });
+  });
+</script>

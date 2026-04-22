@@ -1,21 +1,46 @@
 ---
 import ProductCard from "@/components/product/ProductCard.astro";
 import SectionHeading from "@/components/ui/SectionHeading.astro";
-import { featuredProducts } from "@/data/products";
+import { getTranslations } from "@/i18n";
+import type { Locale } from "@/i18n/config";
+
+interface Props {
+  products: any[];
+}
+
+const { products } = Astro.props;
+const locale = (Astro.currentLocale ?? "fr") as Locale;
+const t = getTranslations(locale);
 ---
 
-<section id="boutique" class="px-4 py-20 sm:px-6 lg:px-10">
-  <div class="mx-auto max-w-7xl">
+<section id="boutique" class="section-band section-band--warm py-20 sm:py-28">
+  <div class="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-10">
     <SectionHeading
-      eyebrow="Best-Sellers"
-      title="A boutique introduction built around the products clients will ask for first."
-      copy="The homepage leads immediately into the most desirable KLARITÉ formulas, framed with editorial calm and enough product clarity to keep intent high."
+      eyebrow={t.sections.bestSellers.eyebrow}
+      title={t.sections.bestSellers.title}
+      copy={t.sections.bestSellers.subtitle}
     />
+  </div>
 
-    <div class="mt-10 overflow-x-auto pb-4 [scrollbar-width:none]">
-      <div class="flex snap-x gap-5">
-        {featuredProducts.map((product) => <ProductCard product={product} />)}
-      </div>
+  <!-- Scroll container: full bleed so cards reach the edge on mobile -->
+  <div
+    class="mt-12 overflow-x-auto pb-6 [scrollbar-width:none] [-webkit-overflow-scrolling:touch] cursor-grab active:cursor-grabbing select-none"
+    data-drag-scroll
+  >
+    <div class="flex snap-x snap-mandatory gap-5 px-4 sm:px-6 lg:px-10" style="width: max-content;">
+      {products.map((product) => <ProductCard product={product} />)}
+      <!-- Trailing spacer so last card isn't flush against edge -->
+      <div class="w-4 shrink-0 lg:w-8" aria-hidden="true"></div>
     </div>
+  </div>
+
+  <!-- Drag hint visible on desktop, swipe hint on mobile -->
+  <div class="mt-5 flex items-center justify-center gap-3 px-4">
+    <div class="h-px w-8 bg-charcoal/15"></div>
+    <p class="text-[0.6rem] uppercase tracking-[0.32em] text-charcoal/30">
+      <span class="hidden md:inline">← Glisser pour explorer →</span>
+      <span class="md:hidden">← Swiper →</span>
+    </p>
+    <div class="h-px w-8 bg-charcoal/15"></div>
   </div>
 </section>

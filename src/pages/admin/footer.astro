@@ -1,0 +1,206 @@
+---
+export const prerender = false;
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { writeClient } from "@/sanity/write-client";
+
+const LOCALES = ["fr", "en", "ar"] as const;
+
+const loc = (arr: any[] | null | undefined, key: string) =>
+  arr?.find((i: any) => i._key === key)?.value ?? "";
+
+let error = "";
+let successMsg = "";
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+
+  try {
+    await writeClient.createIfNotExists({
+      _id: "footerSettings",
+      _type: "footerSettings",
+      brandTagline:   LOCALES.map(k => ({ _key: k, value: "" })),
+      brandCopy:      LOCALES.map(k => ({ _key: k, value: "" })),
+      contactHours:   LOCALES.map(k => ({ _key: k, value: "" })),
+      contactTagline: LOCALES.map(k => ({ _key: k, value: "" })),
+    });
+
+    await writeClient
+      .patch("footerSettings")
+      .set({
+        email:         form.get("email")         as string,
+        copyrightText: form.get("copyrightText") as string,
+        privacyUrl:    form.get("privacyUrl")    as string,
+        termsUrl:      form.get("termsUrl")      as string,
+        shippingUrl:   form.get("shippingUrl")   as string,
+        // Localized fields
+        'brandTagline[_key=="fr"].value':   form.get("brandTagline_fr")   as string,
+        'brandTagline[_key=="en"].value':   form.get("brandTagline_en")   as string,
+        'brandTagline[_key=="ar"].value':   form.get("brandTagline_ar")   as string,
+        'brandCopy[_key=="fr"].value':      form.get("brandCopy_fr")      as string,
+        'brandCopy[_key=="en"].value':      form.get("brandCopy_en")      as string,
+        'brandCopy[_key=="ar"].value':      form.get("brandCopy_ar")      as string,
+        'contactHours[_key=="fr"].value':   form.get("contactHours_fr")   as string,
+        'contactHours[_key=="en"].value':   form.get("contactHours_en")   as string,
+        'contactHours[_key=="ar"].value':   form.get("contactHours_ar")   as string,
+        'contactTagline[_key=="fr"].value': form.get("contactTagline_fr") as string,
+        'contactTagline[_key=="en"].value': form.get("contactTagline_en") as string,
+        'contactTagline[_key=="ar"].value': form.get("contactTagline_ar") as string,
+      })
+      .commit();
+
+    successMsg = "Footer saved successfully.";
+  } catch (e) {
+    error = "Save failed. Please try again.";
+  }
+}
+
+// Fetch current data
+const raw = await writeClient.fetch(`*[_id == "footerSettings"][0]`);
+const doc = raw ?? {};
+---
+
+<AdminLayout title="Footer Settings">
+  <div class="mb-8">
+    <h1 class="font-display text-3xl text-charcoal">Footer Settings</h1>
+    <p class="mt-1 text-sm text-charcoal/55">Edit the brand tagline, contact details, legal links, and copyright shown in the site footer.</p>
+  </div>
+
+  {error     && <div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm text-red-700">{error}</div>}
+  {successMsg && <div class="mb-6 rounded-xl border border-green-200 bg-green-50 px-5 py-3 text-sm text-green-700">{successMsg}</div>}
+
+  <form method="POST" class="space-y-8">
+
+    <!-- ── Brand column ──────────────────────────────────────────────── -->
+    <div class="rounded-[1.5rem] border border-charcoal/10 bg-white/70 p-7 shadow-[0_8px_30px_rgba(31,37,34,0.06)]">
+      <h2 class="mb-1 text-xs font-medium uppercase tracking-wider text-charcoal/50">Brand Column</h2>
+      <p class="mb-6 text-xs text-charcoal/40">The headline and description shown in the bottom-left of the footer.</p>
+
+      <div class="flex gap-0 border-b border-charcoal/10 mb-7">
+        <button type="button" data-tab-btn="brand-fr" class="admin-tab-btn active">🇫🇷 French</button>
+        <button type="button" data-tab-btn="brand-en" class="admin-tab-btn">🇬🇧 English</button>
+        <button type="button" data-tab-btn="brand-ar" class="admin-tab-btn">🇸🇦 Arabic</button>
+      </div>
+
+      {[
+        { key: "fr", flag: "FR", dir: "ltr" },
+        { key: "en", flag: "EN", dir: "ltr" },
+        { key: "ar", flag: "AR", dir: "rtl" },
+      ].map(({ key, dir }, i) => (
+        <div data-tab-panel={`brand-${key}`} class:list={["space-y-5", i > 0 && "hidden"]}>
+          <div class="admin-field">
+            <label>Brand Tagline ({key.toUpperCase()})</label>
+            <input
+              name={`brandTagline_${key}`}
+              class="admin-input"
+              dir={dir}
+              value={loc(doc.brandTagline, key)}
+              placeholder='e.g. Formules calmes. Éclat visible.'
+            />
+          </div>
+          <div class="admin-field">
+            <label>Brand Description ({key.toUpperCase()})</label>
+            <textarea
+              name={`brandCopy_${key}`}
+              rows="3"
+              class="admin-input"
+              dir={dir}
+              placeholder="Short brand description paragraph."
+            >{loc(doc.brandCopy, key)}</textarea>
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <!-- ── Contact column ────────────────────────────────────────────── -->
+    <div class="rounded-[1.5rem] border border-charcoal/10 bg-white/70 p-7 shadow-[0_8px_30px_rgba(31,37,34,0.06)]">
+      <h2 class="mb-1 text-xs font-medium uppercase tracking-wider text-charcoal/50">Contact Column</h2>
+      <p class="mb-6 text-xs text-charcoal/40">The contact email and support text shown in the bottom-right of the footer.</p>
+
+      <div class="admin-field mb-6 max-w-sm">
+        <label>Contact Email</label>
+        <input name="email" type="email" class="admin-input" value={doc.email ?? ""} placeholder="bonjour@klarite.com" />
+      </div>
+
+      <div class="flex gap-0 border-b border-charcoal/10 mb-7">
+        <button type="button" data-tab-btn="contact-fr" class="admin-tab-btn active">🇫🇷 French</button>
+        <button type="button" data-tab-btn="contact-en" class="admin-tab-btn">🇬🇧 English</button>
+        <button type="button" data-tab-btn="contact-ar" class="admin-tab-btn">🇸🇦 Arabic</button>
+      </div>
+
+      {[
+        { key: "fr", dir: "ltr" },
+        { key: "en", dir: "ltr" },
+        { key: "ar", dir: "rtl" },
+      ].map(({ key, dir }, i) => (
+        <div data-tab-panel={`contact-${key}`} class:list={["space-y-5", i > 0 && "hidden"]}>
+          <div class="admin-field">
+            <label>Contact Hours ({key.toUpperCase()})</label>
+            <input
+              name={`contactHours_${key}`}
+              class="admin-input"
+              dir={dir}
+              value={loc(doc.contactHours, key)}
+              placeholder='e.g. Concierge beauté disponible du lundi au samedi.'
+            />
+          </div>
+          <div class="admin-field">
+            <label>Contact Tagline ({key.toUpperCase()})</label>
+            <textarea
+              name={`contactTagline_${key}`}
+              rows="2"
+              class="admin-input"
+              dir={dir}
+              placeholder="e.g. Un accompagnement privé pour un rituel plus doux."
+            >{loc(doc.contactTagline, key)}</textarea>
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <!-- ── Legal bar ─────────────────────────────────────────────────── -->
+    <div class="rounded-[1.5rem] border border-charcoal/10 bg-white/70 p-7 shadow-[0_8px_30px_rgba(31,37,34,0.06)]">
+      <h2 class="mb-1 text-xs font-medium uppercase tracking-wider text-charcoal/50">Legal Bar</h2>
+      <p class="mb-6 text-xs text-charcoal/40">The bottom strip with copyright and legal links. Leave a URL blank to hide that link.</p>
+
+      <div class="grid gap-5 sm:grid-cols-2">
+        <div class="admin-field sm:col-span-2">
+          <label>Copyright Text</label>
+          <input name="copyrightText" class="admin-input" value={doc.copyrightText ?? "© 2025 KLARITÉ. TOUS DROITS RÉSERVÉS."} />
+        </div>
+        <div class="admin-field">
+          <label>Privacy Policy URL</label>
+          <input name="privacyUrl" class="admin-input font-mono text-sm" value={doc.privacyUrl ?? ""} placeholder="/privacy" />
+        </div>
+        <div class="admin-field">
+          <label>Terms & Conditions URL</label>
+          <input name="termsUrl" class="admin-input font-mono text-sm" value={doc.termsUrl ?? ""} placeholder="/terms" />
+        </div>
+        <div class="admin-field">
+          <label>Shipping Info URL</label>
+          <input name="shippingUrl" class="admin-input font-mono text-sm" value={doc.shippingUrl ?? ""} placeholder="/shipping" />
+        </div>
+      </div>
+    </div>
+
+    <div class="flex justify-end">
+      <button type="submit" class="rounded-xl bg-charcoal px-8 py-2.5 text-sm font-medium text-cream transition hover:bg-charcoal/80">
+        Save Footer
+      </button>
+    </div>
+  </form>
+
+  <!-- Tab switching script — same pattern as other admin pages -->
+  <script>
+    document.querySelectorAll<HTMLButtonElement>("[data-tab-btn]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const group = btn.dataset.tabBtn!.replace(/-(?:fr|en|ar)$/, "");
+        document
+          .querySelectorAll<HTMLButtonElement>(`[data-tab-btn^="${group}-"]`)
+          .forEach((b) => b.classList.toggle("active", b === btn));
+        document
+          .querySelectorAll<HTMLDivElement>(`[data-tab-panel^="${group}-"]`)
+          .forEach((p) => p.classList.toggle("hidden", p.dataset.tabPanel !== btn.dataset.tabBtn));
+      });
+    });
+  </script>
+</AdminLayout>

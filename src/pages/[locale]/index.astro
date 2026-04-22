@@ -1,0 +1,697 @@
+---
+export const prerender = true;
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import BestSellers from "@/components/layout/BestSellers.astro";
+import TrustBar from "@/components/layout/TrustBar.astro";
+import { LOCALES, type Locale } from "@/i18n/config";
+import { getTranslations } from "@/i18n";
+import { client } from "@/sanity/client";
+import { urlFor } from "@/sanity/image";
+import { productsQuery, testimonialsQuery, ritualStepsQuery } from "@/sanity/queries";
+
+export function getStaticPaths() {
+  return LOCALES.map(locale => ({ params: { locale } }));
+}
+
+const { locale } = Astro.params as { locale: Locale };
+const t = getTranslations(locale);
+
+const seoQuery = `*[_id == "seoSettings"][0]{
+  keywords, canonicalUrl, twitterHandle, googleAnalyticsId, titleSuffix,
+  "title": homepageTitle[_key == $locale][0].value,
+  "description": homepageDescription[_key == $locale][0].value,
+  "ogImageUrl": ogImage.asset->url
+}`;
+
+const heroQuery = `*[_id == "heroSettings"][0]{
+  eyebrow,
+  mediaType,
+  "heroImageUrl":    heroImage.asset->url,
+  "heroVideoFileUrl": heroVideoFile.asset->url,
+  heroVideoUrl,
+  "badgeImageUrl":  badgeImage.asset->url,
+  "headline":       headline[_key == $locale][0].value,
+  "body":           body[_key == $locale][0].value,
+  "cta1":           cta1Label[_key == $locale][0].value,
+  "cta2":           cta2Label[_key == $locale][0].value,
+  "trust1":         trust1[_key == $locale][0].value,
+  "trust2":         trust2[_key == $locale][0].value,
+  "trust3":         trust3[_key == $locale][0].value,
+  "formulaEyebrow": formulaEyebrow[_key == $locale][0].value,
+  "formulaText":    formulaText[_key == $locale][0].value,
+  "badgeLabel":     badgeLabel[_key == $locale][0].value,
+  "badgeTitle":     badgeTitle[_key == $locale][0].value,
+  tickerPhrases,
+}`;
+
+const [products, testimonials, ritualSteps, seoData, heroData] = await Promise.all([
+  client.fetch(productsQuery, { locale }),
+  client.fetch(testimonialsQuery, { locale }),
+  client.fetch(ritualStepsQuery, { locale }),
+  client.fetch(seoQuery, { locale }),
+  client.fetch(heroQuery, { locale }),
+]);
+
+// Resolve video URL: uploaded file takes priority over external URL
+const heroVideoSrc = heroData?.heroVideoFileUrl || heroData?.heroVideoUrl || null;
+
+// Fallbacks so the hero works before admin fills it in
+const hero = {
+  mediaType:      heroData?.mediaType      || "image",
+  heroImageUrl:   heroData?.heroImageUrl   || null,
+  videoSrc:       heroVideoSrc,
+  badgeImageUrl:  heroData?.badgeImageUrl  || null,
+  eyebrow:        heroData?.eyebrow        || "Toucher Doux",
+  headline:       heroData?.headline       || "Quiet luxury for skin that looks luminous and composed.",
+  body:           heroData?.body           || "KLARITE distills the ritual of French beauty into calm, high-performance formulas with clinical clarity and a soft editorial finish.",
+  cta1:           heroData?.cta1           || t.nav.shopCta,
+  cta2:           heroData?.cta2           || t.nav.skinQuiz,
+  trust1:         heroData?.trust1         || "Parisian restraint",
+  trust2:         heroData?.trust2         || "Visible softness",
+  trust3:         heroData?.trust3         || "Refined daily rituals",
+  formulaEyebrow: heroData?.formulaEyebrow || "Hero Formula",
+  formulaText:    heroData?.formulaText    || "Cushion-soft hydration with a satin glow.",
+  badgeLabel:     heroData?.badgeLabel     || "Signature Care",
+  badgeTitle:     heroData?.badgeTitle     || "Face Cream",
+};
+
+const defaultTicker = [
+  "Formulated in Tunisia", "Argan & Rose", "Satin Finish",
+  "Clean Performance", "Visible Glow", "Quiet Luxury",
+  "French Ritual", "Natural Origin", "Barrier Comfort",
+  "Cruelty-Free", "Tunisian Heritage", "Gold Standard",
+];
+const tickerPhrases: string[] =
+  heroData?.tickerPhrases?.length ? heroData.tickerPhrases : defaultTicker;
+
+// ── Dynamic product helpers ───────────────────────────────────
+const signatureProducts: any[] = products.slice(0, 3);
+
+const waNumber = (import.meta.env.PUBLIC_WHATSAPP_NUMBER ?? "").replace(/\D/g, "");
+
+function waUrl(product: any): string | null {
+  if (!waNumber || !product?.name) return null;
+  const msg = `${t.whatsapp.prefix} ${product.name} — ${product.price ?? ""}`;
+  return `https://wa.me/${waNumber}?text=${encodeURIComponent(msg)}`;
+}
+
+function getGalleryUrls(product: any, width = 900): string[] {
+  const main = product?.image?.asset
+    ? urlFor(product.image).width(width).format("webp").url()
+    : null;
+  const extras = (product?.images ?? [])
+    .filter((img: any) => img?.asset)
+    .map((img: any) => urlFor(img).width(width).format("webp").url());
+  return [main, ...extras].filter(Boolean) as string[];
+}
+
+const benefits = [
+  {
+    title: "Clarity",
+    copy: "Gentle cleansing and intelligent hydration refine the look of texture so skin appears fresh, composed, and balanced."
+  },
+  {
+    title: "Softness",
+    copy: "Silken creams and weightless lotions leave behind a supple finish that feels quiet, comforting, and expensive."
+  },
+  {
+    title: "Radiance",
+    copy: "Each formula is designed to return light to the skin with a satin glow rather than a glossy, overworked shine."
+  }
+];
+
+---
+
+<BaseLayout
+  title={seoData?.title || "KLARITÉ — Beauté Raffinée"}
+  description={seoData?.description || "French-inspired beauty, thoughtfully formulated."}
+  locale={locale}
+  seo={{
+    keywords: seoData?.keywords,
+    canonicalUrl: seoData?.canonicalUrl,
+    twitterHandle: seoData?.twitterHandle,
+    googleAnalyticsId: seoData?.googleAnalyticsId,
+    ogImageUrl: seoData?.ogImageUrl,
+    titleSuffix: seoData?.titleSuffix,
+  }}
+>
+  <!-- ══════════════════════════════════════════════════════════════
+       HERO — full-viewport, two-column editorial layout
+       ══════════════════════════════════════════════════════════════ -->
+  <section
+    id="collection"
+    class="section-band section-band--first section-band--cream relative flex min-h-[100dvh] flex-col justify-center px-4 pb-16 pt-10 sm:px-6 lg:px-10 lg:pb-20 lg:pt-14"
+  >
+    <!-- Ambient background glow -->
+    <div class="pointer-events-none absolute inset-0 overflow-hidden">
+      <div class="absolute right-[5%] top-[8%] h-[50vw] w-[50vw] max-h-[640px] max-w-[640px] rounded-full bg-gold/10 blur-[120px]"></div>
+      <div class="absolute left-[-5%] bottom-[10%] h-[40vw] w-[40vw] max-h-[480px] max-w-[480px] rounded-full bg-sage-300/14 blur-[100px]"></div>
+    </div>
+
+    <div class="relative mx-auto grid w-full max-w-[90rem] gap-10 lg:grid-cols-[1fr_1.08fr] lg:items-center lg:gap-16">
+
+      <!-- LEFT — text column -->
+      <div data-reveal>
+        <p class="eyebrow">{hero.eyebrow}</p>
+
+        <h1
+          class="section-title mt-6 text-charcoal"
+          style="font-size: clamp(3.2rem, 7vw, 7.5rem); max-width: 12ch; line-height: 1.04;"
+        >
+          {hero.headline}
+        </h1>
+
+        <p class="mt-8 max-w-[30rem] text-[1.02rem] leading-[1.85] text-stone sm:text-[1.08rem]">
+          {hero.body}
+        </p>
+
+        <!-- Social proof -->
+        <div class="mt-7 flex items-center gap-3">
+          <div class="flex gap-0.5 leading-none text-gold" style="font-size:1rem;" aria-hidden="true">★★★★★</div>
+          <span class="text-[0.7rem] text-charcoal/55">4.9 / 5 &nbsp;·&nbsp; 200+ clientes satisfaites</span>
+        </div>
+
+        <div class="mt-8 flex flex-col gap-4 sm:flex-row">
+          <a href="#signature-products" class="cta-primary">{hero.cta1}</a>
+          <a href="#skin-quiz" class="cta-secondary">{hero.cta2}</a>
+        </div>
+
+        <ul class="mt-14 grid gap-4 border-t border-charcoal/8 pt-8 text-[0.67rem] uppercase tracking-[0.34em] text-stone/70 sm:grid-cols-3">
+          <li>{hero.trust1}</li>
+          <li>{hero.trust2}</li>
+          <li>{hero.trust3}</li>
+        </ul>
+      </div>
+
+      <!-- RIGHT — hero visual -->
+      <div class="relative" style="min-height: clamp(36rem, 70vh, 56rem);" data-reveal>
+
+        <!-- Outer glow orbs (outside the glass) -->
+        <div class="hero-glow pointer-events-none left-[4%] top-[8%] h-[18rem] w-[18rem] sm:h-[24rem] sm:w-[24rem] lg:h-[28rem] lg:w-[28rem]"></div>
+        <div class="hero-glow hero-glow--gold pointer-events-none right-[2%] top-[6%] h-[20rem] w-[20rem] sm:h-[26rem] sm:w-[26rem] lg:h-[32rem] lg:w-[32rem]"></div>
+
+        <!-- Glass container -->
+        <div class="hero-glass relative flex h-full items-end justify-center overflow-hidden rounded-[2rem] sm:rounded-[2.8rem]">
+          <!-- Inner light layering -->
+          <div class="absolute inset-0 bg-[linear-gradient(145deg,rgba(255,252,248,0.9),rgba(252,248,242,0.38))]"></div>
+          <div class="absolute left-1/2 top-[6%] h-[60%] w-[80%] -translate-x-1/2 rounded-full bg-white/85 blur-[56px]"></div>
+          <div class="absolute left-1/2 top-[12%] h-[50%] w-[64%] -translate-x-1/2 rounded-full bg-sage-300/22 blur-[90px]"></div>
+          <div class="absolute left-1/2 top-[14%] h-[46%] w-[56%] -translate-x-1/2 rounded-full bg-gold/18 blur-[110px]"></div>
+          <!-- Ground shadow -->
+          <div class="absolute inset-x-[10%] bottom-[6%] h-14 rounded-full bg-charcoal/[0.13] blur-[44px]"></div>
+          <div class="absolute inset-x-[24%] bottom-[7%] h-6 rounded-full bg-white/70 blur-[22px]"></div>
+
+          <!-- Main hero media: video or image -->
+          {hero.mediaType === "video" && hero.videoSrc ? (
+            <video
+              autoplay
+              muted
+              loop
+              playsinline
+              class="relative z-10 w-full object-cover drop-shadow-[0_44px_88px_rgba(28,28,28,0.18)]"
+              style="height: clamp(28rem, 55vh, 50rem);"
+            >
+              <source src={hero.videoSrc} />
+            </video>
+          ) : (
+            <img
+              src={hero.heroImageUrl
+                ? `${hero.heroImageUrl}?w=900&auto=format`
+                : (products[0]?.image?.asset ? urlFor(products[0].image).width(900).format("webp").url() : "")}
+              width={900}
+              alt="KLARITÉ hero product"
+              class="relative z-10 w-auto max-w-full object-contain object-center drop-shadow-[0_44px_88px_rgba(28,28,28,0.24)]"
+              style="height: clamp(28rem, 55vh, 50rem); padding-bottom: 2rem;"
+              loading="eager"
+              decoding="async"
+              data-float
+              data-float-distance="16"
+              data-float-duration="11"
+              data-scale-in
+            />
+          )}
+
+          <!-- Floating product badge (bottom-left) -->
+          <aside
+            class="absolute bottom-5 left-5 z-20 w-[10.5rem] rounded-[1.75rem] border border-white/70 bg-[rgba(255,252,249,0.92)] p-3 shadow-[0_20px_56px_rgba(28,28,28,0.12)] backdrop-blur-2xl sm:bottom-7 sm:left-7 sm:w-[12rem] sm:p-4"
+            data-float
+            data-float-distance="7"
+            data-float-duration="14"
+          >
+            <img
+              src={hero.badgeImageUrl
+                ? `${hero.badgeImageUrl}?w=400&h=400&fit=crop&auto=format`
+                : "/images/products/creme-visage-box.jpeg"}
+              width="400"
+              height="400"
+              alt="KLARITÉ product"
+              class="h-28 w-full rounded-[1.3rem] object-cover object-center sm:h-36"
+              loading="lazy"
+              decoding="async"
+            />
+            <p class="mt-3 text-[0.65rem] uppercase tracking-[0.26em] text-charcoal/48">{hero.badgeLabel}</p>
+            <p class="mt-1.5 font-display text-[1.15rem] leading-5 text-charcoal">{hero.badgeTitle}</p>
+          </aside>
+
+          <!-- Formula callout (top-right) — dark pill badge -->
+          <div class="absolute right-5 top-5 z-20 max-w-[13rem] rounded-[1.2rem] border border-white/15 bg-[rgba(28,28,28,0.88)] px-4 py-3 shadow-[0_12px_32px_rgba(28,28,28,0.28)] backdrop-blur-xl sm:right-7 sm:top-7">
+            <p class="text-[0.55rem] uppercase tracking-[0.28em] text-cream/45">{hero.formulaEyebrow}</p>
+            <p class="mt-2 font-display text-[1.1rem] leading-[1.25] tracking-[-0.01em] text-cream">
+              {hero.formulaText}
+            </p>
+          </div>
+        </div>
+
+        <!-- Scroll indicator -->
+        <div class="absolute -bottom-8 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-2 lg:flex">
+          <div class="h-10 w-px bg-gradient-to-b from-charcoal/20 to-transparent"></div>
+          <p class="text-[0.6rem] uppercase tracking-[0.36em] text-charcoal/30">Scroll</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── Trust bar ─────────────────────────────────────────────────── -->
+  <TrustBar trustPoints={[
+    hero.trust1 || "Artisanat Tunisien",
+    hero.trust2 || "Formules Naturelles",
+    hero.trust3 || "Cruelty-Free",
+    "Sans Parabènes",
+  ]} />
+
+  <!-- ── Marquee ticker ─────────────────────────────────────────────── -->
+  <div class="marquee-outer section-band border-y border-charcoal/8 bg-white py-5">
+    <div class="marquee-track items-center">
+      {[...tickerPhrases, ...tickerPhrases].flatMap((item: string) => [
+        <span class="eyebrow shrink-0 whitespace-nowrap px-10 text-charcoal/60">{item}</span>,
+        <span class="shrink-0 text-gold flex-none leading-none" style="font-size:0.55rem;" aria-hidden="true">✦</span>,
+      ])}
+    </div>
+  </div>
+
+  <!-- ── Brand statement (dark) ─────────────────────────────────────── -->
+  <section class="section-band section-band--dark relative px-6 py-16 sm:px-10 sm:py-20 lg:py-28">
+    <!-- Decorative oversized quotation mark -->
+    <div class="pointer-events-none absolute -top-6 left-[3%] select-none font-display leading-none text-white/[0.04]" style="font-size: clamp(14rem, 22vw, 24rem);" aria-hidden="true">&ldquo;</div>
+    <div class="relative mx-auto max-w-[90rem]">
+      <p class="eyebrow text-cream/35 mb-8" data-reveal>The KLARITÉ Promise</p>
+      <div class="mb-8 w-10 border-t border-gold/40" data-reveal></div>
+      <h2
+        class="section-title text-cream"
+        style="font-size: clamp(3.2rem, 8.5vw, 9.5rem); max-width: 18ch;"
+        data-reveal
+      >
+        Skin that speaks before you do.
+      </h2>
+      <div class="mt-8 w-10 border-t border-gold/40" data-reveal></div>
+      <p class="mt-5 text-[0.62rem] uppercase tracking-[0.4em] text-cream/28" data-reveal>— La promesse KLARITÉ</p>
+      <div class="mt-14 grid gap-8 border-t border-white/10 pt-14 sm:grid-cols-3" data-reveal>
+        <p class="text-[0.94rem] leading-[1.8] text-cream/50 sm:col-span-2 max-w-[44rem]">
+          Every KLARITÉ formula is an act of restraint — nothing added without purpose, nothing removed without care. The result is skin that looks composed, luminous, and effortlessly itself.
+        </p>
+        <div class="flex items-end justify-start sm:justify-end">
+          <a href="#signature-products" class="cta-secondary border-white/20 text-cream/80 hover:border-gold/40 hover:text-cream">
+            Shop Collection
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="signature-products" class="section-band section-band--white px-4 py-36 sm:px-6 lg:px-10 lg:py-40">
+    <div class="mx-auto max-w-[90rem]">
+      <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between" data-reveal>
+        <div>
+          <p class="eyebrow">Signature Products</p>
+          <h2
+            class="section-title mt-7 text-charcoal"
+            style="font-size: clamp(2.8rem, 6.5vw, 7rem); max-width: 14ch;"
+          >
+            Three essentials that define the KLARITÉ wardrobe.
+          </h2>
+        </div>
+        <a href="#collection-grid" class="cta-primary mb-1 self-start lg:self-auto shrink-0">View Full Collection</a>
+      </div>
+
+      <div class="mt-20 grid gap-10 xl:grid-cols-3">
+        {signatureProducts.filter(Boolean).map((product: any) => {
+          const galleryUrls = getGalleryUrls(product, 800);
+          const url = waUrl(product);
+          return (
+            <article class="editorial-card group flex flex-col" data-reveal>
+              <!-- Gold accent bar at card top -->
+              <div class="absolute inset-x-0 top-0 z-10 h-[3px] bg-gradient-to-r from-transparent via-gold/50 to-transparent" aria-hidden="true"></div>
+              <div
+                class="editorial-media relative"
+                data-images={galleryUrls.length > 1 ? JSON.stringify(galleryUrls) : undefined}
+              >
+                {product.image?.asset ? (
+                  <img
+                    src={urlFor(product.image).width(800).format("webp").url()}
+                    width={800}
+                    alt={product.image?.alt ?? product.name}
+                    class="gallery-img h-[29rem] w-full object-cover sm:h-[38rem]"
+                    loading="lazy"
+                    decoding="async"
+                    data-scale-in
+                  />
+                ) : (
+                  <div class:list={["h-[29rem] w-full sm:h-[38rem] bg-gradient-to-br", product.accent ?? "from-stone-100 to-stone-200"]}></div>
+                )}
+                <div class="card-overlay">
+                  <span class="rounded-full bg-charcoal/85 px-5 py-2 text-[0.65rem] uppercase tracking-[0.28em] text-cream backdrop-blur-sm">
+                    Discover →
+                  </span>
+                </div>
+              </div>
+
+              <div class="mt-8 flex flex-1 flex-col">
+                <div class="flex items-start justify-between gap-4">
+                  <div>
+                    <p class="eyebrow">{product.category}</p>
+                    <h3 class="mt-4 font-display text-[2.1rem] leading-[1.05] tracking-[-0.02em] text-charcoal sm:text-[2.6rem]">
+                      {product.name}
+                    </h3>
+                    {product.notes?.[0] && (
+                      <p class="mt-2 text-[0.72rem] uppercase tracking-[0.22em] text-stone/80">{product.notes[0]}</p>
+                    )}
+                  </div>
+                  <span class="mt-1 shrink-0 font-display text-[1.4rem] text-charcoal/40">{product.price}</span>
+                </div>
+
+                <p class="mt-5 flex-1 max-w-[24rem] text-[0.94rem] leading-[1.75] text-stone">{product.shortDesc}</p>
+
+              {url && (
+                <a href={url} target="_blank" rel="noopener noreferrer" class="wa-btn mt-6 self-start">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                  {t.product.orderViaWhatsapp}
+                </a>
+              )}
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Section divider ─────────────────────────────────────────── -->
+  <div class="section-band section-band--white">
+    <div class="section-divider mx-auto max-w-[90rem] px-6" aria-hidden="true">
+      <span></span>⟡<span></span>
+    </div>
+  </div>
+
+  <section id="benefits" class="section-band section-band--warm px-4 py-36 sm:px-6 lg:px-10 lg:py-40">
+    <div class="mx-auto grid max-w-[90rem] gap-16 lg:grid-cols-[1fr_1fr] lg:items-start">
+      <!-- Sticky image column -->
+      <div class="relative overflow-hidden rounded-[2rem] border border-white/65 bg-[rgba(255,252,249,0.72)] p-4 shadow-[0_28px_80px_rgba(28,28,28,0.07)] backdrop-blur-xl sm:rounded-[2.4rem] lg:sticky lg:top-28" data-reveal>
+        <div class="absolute inset-x-[16%] top-[8%] h-32 rounded-full bg-white/70 blur-[36px]"></div>
+        <div class="absolute inset-x-[18%] bottom-[8%] h-10 rounded-full bg-charcoal/10 blur-2xl"></div>
+        <img
+          src="/images/products/lotion-hydratante-white.jpeg"
+          width="1024"
+          height="1536"
+          alt="KLARITE Body Lotion on a soft white backdrop."
+          class="relative h-[30rem] w-full rounded-[1.55rem] object-cover object-center sm:h-[42rem]"
+          loading="lazy"
+          decoding="async"
+          data-scale-in
+        />
+      </div>
+
+      <div class="max-w-[34rem]" data-reveal>
+        <p class="eyebrow">Benefits</p>
+        <h2
+          class="section-title mt-7 text-charcoal"
+          style="font-size: clamp(2.6rem, 5.5vw, 6rem); max-width: 12ch;"
+        >
+          A clean formula story told in three outcomes.
+        </h2>
+
+        <div class="mt-16 space-y-2">
+          {benefits.map((benefit, index) => (
+            <article class="rounded-2xl border-t border-charcoal/8 px-3 pb-8 pt-8 transition-colors duration-300 hover:bg-gold/[0.04]">
+              <div class="flex items-start gap-3">
+                <!-- Display-size number as background decoration -->
+                <span class="select-none font-display leading-none text-gold/18 -mt-1" style="font-size: clamp(4.5rem, 8vw, 7rem);">{String(index + 1).padStart(2, '0')}</span>
+                <div class="pt-3">
+                  <h3 class="font-display text-[1.8rem] tracking-[-0.015em] text-charcoal sm:text-[2.2rem]">{benefit.title}</h3>
+                  <p class="mt-4 max-w-[28rem] text-[0.94rem] leading-[1.75] text-stone">{benefit.copy}</p>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Stat bar ─────────────────────────────────────────────────── -->
+  <div class="section-band section-band--dark px-6 sm:px-10">
+    <div class="mx-auto max-w-[90rem]">
+      <div class="stat-bar sm:grid-cols-4">
+        {[
+          { num: "6", label: "Signature formulas" },
+          { num: "100%", label: "Natural origin actives" },
+          { num: "3", label: "Ritual steps" },
+          { num: "TN", label: "Crafted in Tunisia" },
+        ].map(({ num, label }) => (
+          <div class="stat-bar-item" data-reveal>
+            <p class="font-display text-[3.2rem] leading-none tracking-[-0.03em] text-cream sm:text-[4rem]">{num}</p>
+            <p class="mt-3 text-[0.68rem] uppercase tracking-[0.3em] text-cream/45">{label}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+
+  <section id="collection-grid" class="section-band section-band--white px-4 py-36 sm:px-6 lg:px-10 lg:py-40">
+    <div class="mx-auto max-w-[90rem]">
+      <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+        <div data-reveal>
+          <p class="eyebrow">Collection</p>
+          <h2
+            class="section-title mt-7 text-charcoal"
+            style="font-size: clamp(2.8rem, 6.5vw, 7rem); max-width: 14ch;"
+          >
+            The collection arranged with discipline and restraint.
+          </h2>
+        </div>
+        <p class="max-w-[22rem] text-[0.94rem] leading-[1.75] text-stone lg:mb-4" data-reveal>
+          One feature, two supporting rituals, and a final horizontal note to keep the page composed rather than crowded.
+        </p>
+      </div>
+
+      <div class="mt-20 grid gap-8 lg:grid-cols-3 lg:auto-rows-[minmax(18rem,auto)] lg:gap-10">
+        {(products as any[]).map((product: any, index: number) => {
+          const isFirst = index === 0;
+          const cardClass = isFirst ? "lg:col-span-2 lg:row-span-2" : "";
+          const imageHeight = isFirst
+            ? "h-[28rem] sm:h-[34rem] lg:h-[44rem]"
+            : "h-[24rem] sm:h-[28rem] lg:h-[24rem]";
+          const galleryUrls = getGalleryUrls(product, 900);
+          const url = waUrl(product);
+          return (
+            <article class:list={["editorial-card group flex h-full flex-col justify-between", cardClass]} data-reveal>
+              <div
+                class="editorial-media relative"
+                data-images={galleryUrls.length > 1 ? JSON.stringify(galleryUrls) : undefined}
+              >
+                {product.image?.asset ? (
+                  <img
+                    src={urlFor(product.image).width(900).format("webp").url()}
+                    width={900}
+                    alt={product.image?.alt ?? product.name}
+                    class:list={["gallery-img w-full object-cover object-center", imageHeight]}
+                    loading="lazy"
+                    decoding="async"
+                    data-scale-in
+                  />
+                ) : (
+                  <div class:list={["w-full bg-gradient-to-br", product.accent ?? "from-stone-100 to-stone-200", imageHeight]}></div>
+                )}
+                <div class="card-overlay">
+                  <span class="rounded-full bg-charcoal/85 px-5 py-2 text-[0.65rem] uppercase tracking-[0.28em] text-cream backdrop-blur-sm">
+                    Discover →
+                  </span>
+                </div>
+              </div>
+
+              <div class="mt-8 flex flex-1 flex-col">
+                {isFirst ? (
+                  <span class="inline-block self-start rounded-full bg-gold px-4 py-1 text-[0.6rem] font-medium uppercase tracking-[0.2em] text-charcoal/90">Notre Pépite</span>
+                ) : (
+                  <p class="eyebrow">{product.category}</p>
+                )}
+                <div class="mt-3 flex items-start justify-between gap-4">
+                  <h3 class="font-display text-[1.9rem] leading-[1.06] tracking-[-0.02em] text-charcoal sm:text-[2.4rem]">{product.name}</h3>
+                  <span class="mt-1 shrink-0 font-display text-[1.3rem] text-charcoal/36">{product.price}</span>
+                </div>
+                <p class="mt-4 flex-1 max-w-[28rem] text-[0.94rem] leading-[1.75] text-stone">{product.description}</p>
+                {url && (
+                  <a href={url} target="_blank" rel="noopener noreferrer" class="wa-btn mt-5 self-start">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                    {t.product.orderViaWhatsapp}
+                  </a>
+                )}
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Section divider ─────────────────────────────────────────── -->
+  <div class="section-band section-band--white">
+    <div class="section-divider mx-auto max-w-[90rem] px-6" aria-hidden="true">
+      <span></span>⟡<span></span>
+    </div>
+  </div>
+
+  <section id="rituals" class="section-band section-band--cream px-4 py-36 sm:px-6 lg:px-10 lg:py-40">
+    <div class="mx-auto max-w-[90rem]">
+      <div class="max-w-[38rem]" data-reveal>
+        <p class="eyebrow">Ritual</p>
+        <h2
+          class="section-title mt-7 text-charcoal"
+          style="font-size: clamp(3rem, 7vw, 8rem); max-width: 10ch;"
+        >
+          Cleanse, hydrate, perfume.
+        </h2>
+      </div>
+
+      <div class="mt-20 grid gap-10 lg:grid-cols-3">
+        {ritualSteps.map((step: any) => (
+          <article class="group border-t border-charcoal/8 pt-8" data-reveal>
+            <div class="overflow-hidden rounded-[1.6rem] border border-white/60 bg-[rgba(255,252,249,0.65)] shadow-[0_18px_48px_rgba(28,28,28,0.05)]">
+              <img
+                src={urlFor(step.image).width(700).format("webp").url()}
+                width={700}
+                alt={step.image.alt}
+                class="h-[22rem] w-full object-cover object-center transition duration-[1200ms] ease-[var(--ease-premium)] group-hover:scale-[1.05] sm:h-[26rem]"
+                loading="lazy"
+                decoding="async"
+                data-scale-in
+              />
+            </div>
+            <div class="mt-7 flex items-baseline gap-4">
+              <span class="font-display text-[1.7rem] text-gold sm:text-[2rem]">{step.number}</span>
+              <h3 class="font-display text-[1.9rem] tracking-[-0.02em] text-charcoal sm:text-[2.4rem]">{step.title}</h3>
+            </div>
+            <p class="mt-4 max-w-[22rem] text-[0.94rem] leading-[1.75] text-stone">{step.copy}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section id="skin-quiz" class="section-band section-band--warm px-4 py-28 sm:px-6 lg:px-10 lg:py-32">
+    <div class="mx-auto flex max-w-[90rem] flex-col gap-6 rounded-[2rem] border border-white/65 bg-[rgba(255,252,249,0.72)] px-8 py-12 shadow-[0_20px_60px_rgba(28,28,28,0.06)] backdrop-blur-xl lg:flex-row lg:items-center lg:justify-between lg:px-12 lg:py-14">
+      <div data-reveal>
+        <p class="eyebrow">Skin Quiz</p>
+        <p class="mt-4 max-w-[30rem] font-display text-[1.75rem] leading-[1.2] tracking-[-0.015em] text-charcoal sm:text-[2.6rem]">
+          Find the ritual your skin is asking for, with guidance that feels personal and precise.
+        </p>
+      </div>
+      <div class="flex flex-col items-start gap-4" data-reveal>
+        <p class="max-w-[16rem] text-[0.67rem] uppercase tracking-[0.32em] text-stone/80">
+          Diagnostic flow reserved for the next phase.
+        </p>
+        <a href="#signature-products" class="cta-secondary">Browse Essentials</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Pull quote ────────────────────────────────────────────────── -->
+  <section class="section-band section-band--dark overflow-hidden px-6 py-32 sm:px-10 lg:py-44">
+    <div class="mx-auto max-w-[90rem]">
+      <p class="eyebrow text-gold mb-10" data-reveal>Quiet formulas. Visible glow.</p>
+      <blockquote
+        class="section-title text-cream"
+        style="font-size: clamp(2.4rem, 7vw, 8rem); max-width: 20ch; line-height: 1.08;"
+        data-reveal
+      >
+        "Refined daily rituals for skin that deserves nothing less."
+      </blockquote>
+      <p class="mt-10 text-[0.67rem] uppercase tracking-[0.38em] text-cream/35" data-reveal>
+        — KLARITÉ, Tunis
+      </p>
+    </div>
+  </section>
+
+  <section id="testimonials" class="section-band section-band--white px-4 py-36 sm:px-6 lg:px-10 lg:py-40">
+    <div class="mx-auto max-w-[90rem]">
+      <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between" data-reveal>
+        <div>
+          <p class="eyebrow">Testimonials</p>
+          <h2
+            class="section-title mt-7 text-charcoal"
+            style="font-size: clamp(2.8rem, 6vw, 6.5rem); max-width: 14ch;"
+          >
+            Words that linger like fragrance.
+          </h2>
+        </div>
+        <p class="max-w-[20rem] text-[0.88rem] leading-[1.75] text-stone/70 lg:mb-4">
+          Real skin. Real rituals. Real results.
+        </p>
+      </div>
+
+      <div class="mt-20 grid gap-14 lg:grid-cols-3">
+        {testimonials.map((testimonial: any) => (
+          <blockquote class="group relative border-t-2 border-gold/30 pt-10" data-reveal>
+            <span class="absolute -top-6 left-0 font-display text-[5rem] leading-none text-gold/15 select-none">&ldquo;</span>
+            <p class="relative font-display text-[1.75rem] leading-[1.25] tracking-[-0.015em] text-charcoal sm:text-[2.1rem]">
+              {testimonial.quote}
+            </p>
+            <footer class="mt-8 flex items-center gap-3">
+              <div class="h-px w-8 bg-gold/40"></div>
+              <div>
+                <p class="text-[0.67rem] uppercase tracking-[0.3em] text-charcoal/80">{testimonial.name}</p>
+                <p class="mt-0.5 text-[0.62rem] uppercase tracking-[0.26em] text-stone/55">{testimonial.detail}</p>
+              </div>
+            </footer>
+          </blockquote>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ── All Products carousel ─────────────────────────────────── -->
+  {products.length > 0 && (
+    <BestSellers products={products} />
+  )}
+
+</BaseLayout>
+
+<script>
+  function initImageCycling() {
+    document.querySelectorAll<HTMLElement>("[data-images]").forEach((el) => {
+      if ((el as any).__galInit) return;
+      (el as any).__galInit = true;
+      try {
+        const urls: string[] = JSON.parse(el.dataset.images!);
+        if (!Array.isArray(urls) || urls.length < 2) return;
+        const img = el.querySelector<HTMLImageElement>(".gallery-img");
+        if (!img) return;
+        let idx = 0;
+        let timer: ReturnType<typeof setInterval>;
+        el.addEventListener("mouseenter", () => {
+          timer = setInterval(() => {
+            idx = (idx + 1) % urls.length;
+            img.src = urls[idx];
+          }, 700);
+        });
+        el.addEventListener("mouseleave", () => {
+          clearInterval(timer);
+          idx = 0;
+          img.src = urls[0];
+        });
+      } catch {}
+    });
+  }
+  document.addEventListener("DOMContentLoaded", initImageCycling);
+  document.addEventListener("astro:after-swap", initImageCycling);
+</script>

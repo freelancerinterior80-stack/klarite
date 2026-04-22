@@ -310,3 +310,167 @@ img {
     animation: none !important;
   }
 }
+
+/* ═══════════════════════════════════════
+   Marquee / Ticker
+   ═══════════════════════════════════════ */
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.marquee-outer {
+  overflow: hidden;
+  cursor: default;
+}
+
+.marquee-track {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  animation: marquee 48s linear infinite;
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+/* ═══════════════════════════════════════
+   Dark statement band
+   ═══════════════════════════════════════ */
+
+.section-band--dark {
+  background: #1c1c1c;
+  color: #f6f3ee;
+}
+
+.section-band--dark::before {
+  display: none;
+}
+
+/* ═══════════════════════════════════════
+   Editorial card — discover overlay
+   ═══════════════════════════════════════ */
+
+.card-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 1.25rem;
+  opacity: 0;
+  transition: opacity 500ms var(--ease-premium);
+}
+
+.editorial-card:hover .card-overlay {
+  opacity: 1;
+}
+
+/* ═══════════════════════════════════════
+   Stat bar
+   ═══════════════════════════════════════ */
+
+.stat-bar {
+  display: grid;
+  gap: 0;
+  border-top: 1px solid rgba(198, 169, 107, 0.18);
+  border-bottom: 1px solid rgba(198, 169, 107, 0.18);
+}
+
+.stat-bar-item {
+  padding: 2.5rem 2rem;
+  border-right: 1px solid rgba(198, 169, 107, 0.14);
+}
+
+.stat-bar-item:last-child {
+  border-right: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none !important;
+  }
+}
+
+/* ═══════════════════════════════════════
+   WhatsApp button
+   ═══════════════════════════════════════ */
+
+.wa-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: 2.65rem;
+  border-radius: 999px;
+  padding: 0.6rem 1.4rem;
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  background: #25D366;
+  color: #ffffff;
+  transition:
+    transform 320ms var(--ease-premium),
+    opacity 250ms ease,
+    box-shadow 320ms var(--ease-premium);
+  box-shadow: 0 8px 24px rgba(37, 211, 102, 0.28);
+}
+
+.wa-btn:hover {
+  transform: translateY(-2px);
+  opacity: 0.92;
+  box-shadow: 0 14px 34px rgba(37, 211, 102, 0.36);
+}
+
+/* ═══════════════════════════════════════
+   Section divider ornament  ⟡
+   ═══════════════════════════════════════ */
+
+.section-divider {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  justify-content: center;
+  color: var(--color-gold);
+  opacity: 0.5;
+  font-size: 0.78rem;
+  padding: 2rem 1rem;
+}
+
+.section-divider span {
+  flex: 0 0 4rem;
+  height: 1px;
+  background: currentColor;
+}
+
+/* ═══════════════════════════════════════
+   RTL / Arabic Typography
+   ═══════════════════════════════════════ */
+
+:root {
+  --font-arabic: "Cairo", "Inter", sans-serif;
+}
+
+html[dir="rtl"] {
+  font-family: var(--font-arabic);
+}
+
+html[dir="rtl"] body {
+  font-family: var(--font-arabic);
+  letter-spacing: 0;
+}
+
+html[dir="rtl"] .font-display,
+html[dir="rtl"] h1,
+html[dir="rtl"] h2,
+html[dir="rtl"] h3 {
+  font-family: var(--font-arabic);
+  font-weight: 500;
+}
+
+html[dir="rtl"] .rtl-flip {
+  transform: scaleX(-1);
+}

@@ -1,0 +1,97 @@
+---
+export const prerender = false;
+
+import { signSession, verifySession, SESSION_COOKIE } from "@/lib/admin-auth";
+import "@/styles/global.css";
+
+// Already logged in → go to dashboard
+const token = Astro.cookies.get(SESSION_COOKIE)?.value ?? "";
+if (verifySession(token, import.meta.env.ADMIN_SESSION_SECRET ?? "")) {
+  return Astro.redirect("/admin/dashboard");
+}
+
+let error = "";
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  const username = (form.get("username") as string ?? "").trim();
+  const password = form.get("password") as string ?? "";
+
+  if (
+    username === import.meta.env.ADMIN_USERNAME &&
+    password === import.meta.env.ADMIN_PASSWORD
+  ) {
+    const sessionToken = signSession(username, import.meta.env.ADMIN_SESSION_SECRET);
+    Astro.cookies.set(SESSION_COOKIE, sessionToken, {
+      httpOnly: true,
+      secure: import.meta.env.PROD,
+      maxAge: 60 * 60 * 24 * 7,
+      path: "/",
+      sameSite: "strict",
+    });
+    return Astro.redirect("/admin/dashboard");
+  }
+
+  error = "Invalid username or password.";
+}
+---
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Admin Login — KLARITÉ</title>
+  </head>
+  <body class="flex min-h-screen items-center justify-center bg-cream font-body">
+
+    <div class="w-full max-w-sm px-6">
+      <div class="mb-8 text-center">
+        <p class="font-display text-3xl text-charcoal">KLARITÉ</p>
+        <p class="mt-1 text-sm text-charcoal/50 uppercase tracking-widest">Admin</p>
+      </div>
+
+      <div class="rounded-[1.5rem] border border-charcoal/10 bg-white/70 p-8 shadow-[0_20px_60px_rgba(31,37,34,0.08)]">
+        {error && (
+          <p class="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </p>
+        )}
+
+        <form method="POST" class="space-y-5">
+          <div>
+            <label class="mb-1.5 block text-xs font-medium uppercase tracking-wider text-charcoal/60">
+              Username
+            </label>
+            <input
+              type="text"
+              name="username"
+              required
+              autocomplete="username"
+              class="w-full rounded-xl border border-charcoal/15 bg-white px-4 py-3 text-sm text-charcoal outline-none transition focus:border-gold/60 focus:ring-2 focus:ring-gold/20"
+            />
+          </div>
+          <div>
+            <label class="mb-1.5 block text-xs font-medium uppercase tracking-wider text-charcoal/60">
+              Password
+            </label>
+            <input
+              type="password"
+              name="password"
+              required
+              autocomplete="current-password"
+              class="w-full rounded-xl border border-charcoal/15 bg-white px-4 py-3 text-sm text-charcoal outline-none transition focus:border-gold/60 focus:ring-2 focus:ring-gold/20"
+            />
+          </div>
+          <button
+            type="submit"
+            class="w-full rounded-xl bg-charcoal py-3 text-sm font-medium text-cream transition hover:bg-charcoal/80"
+          >
+            Sign in
+          </button>
+        </form>
+      </div>
+    </div>
+
+  </body>
+</html>

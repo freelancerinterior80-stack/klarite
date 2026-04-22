@@ -1,21 +1,25 @@
 ---
 import LinkButton from "@/components/ui/LinkButton.astro";
+import { getTranslations } from "@/i18n";
+import type { Locale } from "@/i18n/config";
+
+const locale = (Astro.currentLocale ?? "fr") as Locale;
+const t = getTranslations(locale);
 ---
 
 <section id="quiz" class="px-4 py-20 sm:px-6 lg:px-10">
   <div class="mx-auto grid max-w-7xl gap-5 lg:grid-cols-[1fr_0.95fr]">
     <article class="ambient-card rounded-[2.4rem] border border-white/70 p-8 shadow-[0_24px_70px_rgba(31,37,34,0.08)]" data-reveal>
-      <p class="eyebrow">Skin Quiz Teaser</p>
+      <p class="eyebrow">{t.sections.quiz.eyebrow}</p>
       <h2 class="section-title mt-4 text-4xl text-charcoal sm:text-5xl">
-        A guided diagnosis moment that makes the brand feel attentive before checkout.
+        {t.sections.quiz.title}
       </h2>
       <p class="mt-5 max-w-2xl text-base leading-8 text-charcoal/72">
-        The quiz module will later live as an island, but the homepage already frames it as a soft
-        concierge tool: identify concern, texture preference, and ideal ritual path in less than two minutes.
+        {t.sections.quiz.description}
       </p>
       <div class="mt-8 flex flex-col gap-3 sm:flex-row">
-        <LinkButton href="#newsletter">Join For Early Access</LinkButton>
-        <LinkButton href="#concerns" variant="ghost">Browse Concerns</LinkButton>
+        <LinkButton href="#newsletter">{t.sections.quiz.ctaPrimary}</LinkButton>
+        <LinkButton href="#concerns" variant="ghost">{t.sections.quiz.ctaSecondary}</LinkButton>
       </div>
     </article>
 
@@ -24,16 +28,16 @@ import LinkButton from "@/components/ui/LinkButton.astro";
         <p class="eyebrow">Data Capture Strategy</p>
         <div class="space-y-5">
           <div class="rounded-[1.5rem] border border-white/60 bg-white/44 px-5 py-4">
-            <p class="text-sm uppercase tracking-[0.2em] text-charcoal/58">Question one</p>
-            <p class="mt-2 font-display text-2xl text-charcoal">What is your primary skin concern?</p>
+            <p class="text-sm uppercase tracking-[0.2em] text-charcoal/58">{t.sections.quiz.q1Label}</p>
+            <p class="mt-2 font-display text-2xl text-charcoal">{t.sections.quiz.q1}</p>
           </div>
           <div class="rounded-[1.5rem] border border-white/60 bg-white/44 px-5 py-4">
-            <p class="text-sm uppercase tracking-[0.2em] text-charcoal/58">Question two</p>
-            <p class="mt-2 font-display text-2xl text-charcoal">How do you want your skin to feel after application?</p>
+            <p class="text-sm uppercase tracking-[0.2em] text-charcoal/58">{t.sections.quiz.q2Label}</p>
+            <p class="mt-2 font-display text-2xl text-charcoal">{t.sections.quiz.q2}</p>
           </div>
           <div class="rounded-[1.5rem] border border-white/60 bg-white/44 px-5 py-4">
-            <p class="text-sm uppercase tracking-[0.2em] text-charcoal/58">Question three</p>
-            <p class="mt-2 font-display text-2xl text-charcoal">Which ritual cadence fits your day?</p>
+            <p class="text-sm uppercase tracking-[0.2em] text-charcoal/58">{t.sections.quiz.q3Label}</p>
+            <p class="mt-2 font-display text-2xl text-charcoal">{t.sections.quiz.q3}</p>
           </div>
         </div>
       </div>

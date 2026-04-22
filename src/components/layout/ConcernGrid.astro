@@ -1,19 +1,28 @@
 ---
 import SectionHeading from "@/components/ui/SectionHeading.astro";
-import { concerns } from "@/data/products";
+import { getTranslations } from "@/i18n";
+import type { Locale } from "@/i18n/config";
+
+interface Props {
+  concerns: { title: string; copy: string }[];
+}
+
+const { concerns } = Astro.props;
+const locale = (Astro.currentLocale ?? "fr") as Locale;
+const t = getTranslations(locale);
 ---
 
 <section id="concerns" class="px-4 py-20 sm:px-6 lg:px-10">
   <div class="mx-auto max-w-7xl">
     <SectionHeading
-      eyebrow="Shop By Concern"
-      title="Structured like a beauty editorial, but tuned for fast self-selection."
-      copy="This section is designed to help visitors identify themselves in seconds, reducing friction and making the catalog feel personally relevant."
+      eyebrow={t.sections.concerns.eyebrow}
+      title={t.sections.concerns.title}
+      copy={t.sections.concerns.subtitle}
     />
 
     <div class="mt-10 grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
       <article class="grain ambient-card rounded-[2.4rem] border border-white/70 p-8 shadow-[0_24px_70px_rgba(31,37,34,0.08)]" data-reveal>
-        <p class="eyebrow">Primary concern</p>
+        <p class="eyebrow">{t.sections.concerns.primaryLabel}</p>
         <h3 class="mt-4 font-display text-4xl text-charcoal sm:text-5xl">{concerns[0].title}</h3>
         <p class="mt-5 max-w-xl text-base leading-8 text-charcoal/72">{concerns[0].copy}</p>
         <div class="mt-8 asset-well h-72 rounded-[2rem]">
@@ -28,7 +37,7 @@ import { concerns } from "@/data/products";
       <div class="grid gap-5">
         {concerns.slice(1).map((concern, index) => (
           <article class="ambient-card rounded-[2rem] border border-white/70 p-7 shadow-[0_20px_50px_rgba(31,37,34,0.07)]" data-reveal>
-            <p class="eyebrow">{index === 0 ? "Hydration concern" : "Cleansing concern"}</p>
+            <p class="eyebrow">{index === 0 ? t.sections.concerns.hydrationLabel : t.sections.concerns.cleansingLabel}</p>
             <h3 class="mt-4 font-display text-3xl text-charcoal">{concern.title}</h3>
             <p class="mt-4 text-sm leading-7 text-charcoal/72">{concern.copy}</p>
             <div class="mt-6 asset-well h-44 rounded-[1.75rem]">

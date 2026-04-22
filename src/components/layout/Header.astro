@@ -1,65 +1,204 @@
 ---
+import LocaleSwitcher from "@/components/ui/LocaleSwitcher.astro";
+import { getTranslations } from "@/i18n";
+import type { Locale } from "@/i18n/config";
+
+interface Props {
+  locale?: Locale;
+}
+
+const { locale = "fr" } = Astro.props;
+const t = getTranslations(locale);
+
 const navItems = [
-  { href: "#signature-products", label: "Signature" },
-  { href: "#benefits", label: "Benefits" },
-  { href: "#collection-grid", label: "Collection" },
-  { href: "#rituals", label: "Ritual" },
-  { href: "#testimonials", label: "Testimonials" }
+  { href: "#signature-products", label: t.nav.items.signature },
+  { href: "#benefits",           label: t.nav.items.benefits },
+  { href: "#collection-grid",    label: t.nav.items.collection },
+  { href: "#rituals",            label: t.nav.items.ritual },
+  { href: "#testimonials",       label: t.nav.items.testimonials },
 ];
 ---
 
-<header class="sticky top-0 z-50 px-4 pt-4 sm:px-6 lg:px-10">
-  <div class="mx-auto flex max-w-[90rem] items-center justify-between rounded-full border border-white/70 bg-white/52 px-4 py-3 shadow-[0_20px_50px_rgba(26,26,26,0.06)] backdrop-blur-xl sm:px-6">
-    <a href="/" class="flex items-center gap-3">
-      <span class="font-display text-[1.5rem] tracking-[0.24em] text-charcoal">KLARITE</span>
-      <span class="hidden text-[0.68rem] uppercase tracking-[0.34em] text-charcoal/42 sm:block">
-        Toucher Doux
+<header id="site-header" class="sticky top-0 z-50 px-4 pt-4 sm:px-6 lg:px-10">
+
+  <!-- Pill bar -->
+  <div
+    id="header-pill"
+    class="mx-auto flex max-w-[90rem] items-center justify-between rounded-full border border-white/65 bg-white/55 px-5 py-3 shadow-[0_16px_48px_rgba(26,26,26,0.07)] backdrop-blur-2xl transition-all duration-500 lg:px-8"
+  >
+
+    <!-- Logo -->
+    <a href={`/${locale}/`} class="group flex shrink-0 items-center gap-3.5">
+      <span class="font-display text-[1.45rem] tracking-[0.22em] text-charcoal transition-opacity duration-300 group-hover:opacity-70">
+        KLARITÉ
+      </span>
+      <span class="hidden h-4 w-px bg-charcoal/18 sm:block"></span>
+      <span class="hidden text-[0.62rem] uppercase tracking-[0.38em] text-charcoal/36 transition-colors duration-300 group-hover:text-charcoal/55 sm:block">
+        {t.nav.tagline}
       </span>
     </a>
 
-    <nav class="hidden items-center gap-7 lg:flex">
-      {
-        navItems.map((item) => (
-          <a
-            href={item.href}
-            class="text-[0.72rem] uppercase tracking-[0.26em] text-charcoal/58 transition hover:text-charcoal"
-          >
-            {item.label}
-          </a>
-        ))
-      }
+    <!-- Desktop nav -->
+    <nav class="hidden items-center gap-8 lg:flex">
+      {navItems.map((item) => (
+        <a
+          href={item.href}
+          data-nav-link
+          class="group/link relative text-[0.68rem] uppercase tracking-[0.28em] text-charcoal/48 transition-colors duration-300 hover:text-charcoal"
+        >
+          {item.label}
+          <!-- Gold underline slide-in -->
+          <span class="nav-underline absolute -bottom-0.5 left-0 h-px w-0 bg-gold transition-all duration-500 ease-[var(--ease-premium)]"></span>
+        </a>
+      ))}
     </nav>
 
+    <!-- Desktop right -->
     <div class="hidden items-center gap-3 lg:flex">
+      <LocaleSwitcher currentLocale={locale} />
+
+      <span class="h-5 w-px bg-charcoal/10"></span>
+
       <a
         href="#skin-quiz"
-        class="rounded-full border border-charcoal/10 px-4 py-2 text-[0.72rem] uppercase tracking-[0.24em] text-charcoal/68 transition hover:border-gold/35 hover:text-charcoal"
+        class="text-[0.68rem] uppercase tracking-[0.26em] text-charcoal/50 transition-colors duration-300 hover:text-charcoal"
       >
-        Skin Quiz
+        {t.nav.skinQuiz}
       </a>
+
       <a
         href="#signature-products"
-        class="rounded-full border border-gold/50 bg-charcoal px-5 py-2.5 text-[0.72rem] uppercase tracking-[0.24em] text-cream transition hover:-translate-y-0.5 hover:bg-[#111111]"
+        class="rounded-full bg-charcoal px-5 py-2.5 text-[0.68rem] uppercase tracking-[0.26em] text-cream shadow-[0_4px_14px_rgba(28,28,28,0.22)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#111] hover:shadow-[0_8px_22px_rgba(28,28,28,0.28)]"
       >
-        Shop Collection
+        {t.nav.shopCta}
       </a>
     </div>
 
-    <details class="group relative lg:hidden">
-      <summary class="list-none rounded-full border border-charcoal/12 px-4 py-2 text-[0.68rem] uppercase tracking-[0.24em] text-charcoal/72">
-        Menu
-      </summary>
-      <div class="absolute right-0 top-16 w-[min(22rem,calc(100vw-2rem))] rounded-[1.8rem] border border-white/75 bg-white/90 p-6 shadow-[0_24px_60px_rgba(26,26,26,0.12)] backdrop-blur-xl">
-        <nav class="flex flex-col gap-4">
-          {
-            navItems.map((item) => (
-              <a href={item.href} class="border-b border-charcoal/8 pb-4 text-sm uppercase tracking-[0.22em] text-charcoal/72 last:border-none last:pb-0">
-                {item.label}
-              </a>
-            ))
-          }
-        </nav>
-      </div>
-    </details>
+    <!-- Mobile hamburger -->
+    <button
+      id="mobile-menu-btn"
+      aria-label="Toggle menu"
+      aria-expanded="false"
+      class="flex h-9 w-9 flex-col items-center justify-center gap-[5px] rounded-full border border-charcoal/12 transition hover:border-charcoal/24 lg:hidden"
+    >
+      <span class="ham-line block h-px w-4 origin-center bg-charcoal/65 transition-all duration-300"></span>
+      <span class="ham-line block h-px w-4 origin-center bg-charcoal/65 transition-all duration-300"></span>
+      <span class="ham-line block h-px w-2.5 origin-center bg-charcoal/65 transition-all duration-300 self-end mr-2"></span>
+    </button>
+  </div>
+
+  <!-- Mobile menu panel -->
+  <div
+    id="mobile-menu"
+    class="mx-auto mt-2 hidden max-w-[90rem] overflow-hidden rounded-[1.8rem] border border-white/75 bg-white/95 shadow-[0_24px_60px_rgba(26,26,26,0.12)] backdrop-blur-2xl"
+  >
+    <nav class="flex flex-col px-6 pt-6">
+      {navItems.map((item) => (
+        <a
+          href={item.href}
+          class="mobile-nav-link border-b border-charcoal/7 py-4 text-sm uppercase tracking-[0.24em] text-charcoal/60 transition-colors duration-200 hover:text-charcoal last:border-none"
+        >
+          {item.label}
+        </a>
+      ))}
+    </nav>
+    <div class="flex items-center justify-between border-t border-charcoal/8 px-6 py-5 mt-2">
+      <LocaleSwitcher currentLocale={locale} />
+      <a
+        href="#signature-products"
+        class="mobile-nav-link rounded-full bg-charcoal px-5 py-2.5 text-[0.68rem] uppercase tracking-[0.26em] text-cream"
+      >
+        {t.nav.shopCta}
+      </a>
+    </div>
   </div>
 </header>
+
+<style>
+  /* Active nav link state — toggled by JS scroll spy */
+  [data-nav-link].is-active {
+    color: #1c1c1c;
+  }
+  [data-nav-link].is-active .nav-underline {
+    width: 100%;
+  }
+  /* Hamburger open → X */
+  #mobile-menu-btn.is-open .ham-line:nth-child(1) {
+    transform: translateY(6px) rotate(45deg);
+    width: 1rem;
+  }
+  #mobile-menu-btn.is-open .ham-line:nth-child(2) {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  #mobile-menu-btn.is-open .ham-line:nth-child(3) {
+    transform: translateY(-6px) rotate(-45deg);
+    width: 1rem;
+    margin-right: 0;
+    align-self: center;
+  }
+</style>
+
+<script>
+  function initHeader() {
+    const pill   = document.getElementById("header-pill");
+    const btn    = document.getElementById("mobile-menu-btn");
+    const menu   = document.getElementById("mobile-menu");
+
+    // ── Scroll opacity boost ──────────────────────────────────
+    function onScroll() {
+      if (!pill) return;
+      const scrolled = window.scrollY > 24;
+      pill.style.background      = scrolled ? "rgba(255,255,255,0.82)" : "";
+      pill.style.backdropFilter  = scrolled ? "blur(24px) saturate(1.8)" : "";
+      pill.style.boxShadow       = scrolled
+        ? "0 20px 60px rgba(26,26,26,0.10)"
+        : "";
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+
+    // ── Mobile menu toggle ────────────────────────────────────
+    btn?.addEventListener("click", () => {
+      const opening = menu?.classList.toggle("hidden");
+      btn.classList.toggle("is-open", !opening);
+      btn.setAttribute("aria-expanded", String(!opening));
+    });
+
+    document.querySelectorAll(".mobile-nav-link").forEach((link) => {
+      link.addEventListener("click", () => {
+        menu?.classList.add("hidden");
+        btn?.classList.remove("is-open");
+        btn?.setAttribute("aria-expanded", "false");
+      });
+    });
+
+    // ── Scroll spy — highlight active section ─────────────────
+    const navLinks = document.querySelectorAll<HTMLElement>("[data-nav-link]");
+    const targets  = document.querySelectorAll<HTMLElement>(
+      navLinks.length
+        ? [...navLinks].map(l => l.getAttribute("href")).filter(Boolean).join(", ")
+        : "section[id]"
+    );
+
+    if (!targets.length || !navLinks.length) return;
+
+    const spy = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          const activeHref = `#${entry.target.id}`;
+          navLinks.forEach((link) => {
+            const active = link.getAttribute("href") === activeHref;
+            link.classList.toggle("is-active", active);
+          });
+        });
+      },
+      { rootMargin: "-38% 0px -56% 0px", threshold: 0 }
+    );
+    targets.forEach((t) => spy.observe(t));
+  }
+
+  initHeader();
+  document.addEventListener("astro:after-swap", initHeader);
+</script>

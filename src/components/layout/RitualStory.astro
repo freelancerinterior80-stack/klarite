@@ -1,14 +1,23 @@
 ---
 import SectionHeading from "@/components/ui/SectionHeading.astro";
-import { ritualSteps } from "@/data/products";
+import { getTranslations } from "@/i18n";
+import type { Locale } from "@/i18n/config";
+
+interface Props {
+  ritualSteps: { number: string; title: string; copy: string }[];
+}
+
+const { ritualSteps } = Astro.props;
+const locale = (Astro.currentLocale ?? "fr") as Locale;
+const t = getTranslations(locale);
 ---
 
 <section id="rituels" class="px-4 py-20 sm:px-6 lg:px-10">
   <div class="mx-auto max-w-7xl">
     <SectionHeading
-      eyebrow="Nos Rituels"
-      title="A scrolling narrative that explains how KLARITÉ should feel, not just what it contains."
-      copy="This structure is built for scrollytelling later with GSAP, but the content already reads clearly without motion and supports premium education."
+      eyebrow={t.sections.ritual.eyebrow}
+      title={t.sections.ritual.title}
+      copy={t.sections.ritual.subtitle}
     />
 
     <div class="mt-10 grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">

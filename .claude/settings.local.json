@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__Sanity__list_projects"
+    ]
+  }
+}

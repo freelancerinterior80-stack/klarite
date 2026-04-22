@@ -1,0 +1,105 @@
+---
+export const prerender = false;
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { writeClient } from "@/sanity/write-client";
+
+const { id } = Astro.params;
+const loc = (arr: any[] | null | undefined, key: string) =>
+  arr?.find((i: any) => i._key === key)?.value ?? "";
+
+let error = "";
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  try {
+    await writeClient
+      .patch(id!)
+      .set({
+        'quote[_key=="fr"].value': form.get("quote_fr") as string,
+        'quote[_key=="en"].value': form.get("quote_en") as string,
+        'quote[_key=="ar"].value': form.get("quote_ar") as string,
+        name:   form.get("name") as string,
+        detail: form.get("detail") as string,
+      })
+      .commit();
+
+    return Astro.redirect("/admin/testimonials?saved=1");
+  } catch (e) {
+    error = "Save failed. Please try again.";
+  }
+}
+
+const doc = await writeClient.fetch(
+  `*[_id == $id][0]{ _id, name, detail, order, quote }`,
+  { id }
+);
+
+if (!doc) return Astro.redirect("/admin/testimonials");
+---
+
+<AdminLayout title={`Edit Testimonial: ${doc.name}`}>
+  <div class="mb-8 flex items-center justify-between">
+    <div>
+      <a href="/admin/testimonials" class="text-sm text-charcoal/50 hover:text-charcoal transition">← Testimonials</a>
+      <h1 class="mt-2 font-display text-3xl text-charcoal">{doc.name}</h1>
+    </div>
+  </div>
+
+  {error && (
+    <div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm text-red-700">{error}</div>
+  )}
+
+  <form method="POST" class="space-y-8">
+
+    <!-- Translated -->
+    <div class="rounded-[1.5rem] border border-charcoal/10 bg-white/70 p-7 shadow-[0_8px_30px_rgba(31,37,34,0.06)]">
+      <h2 class="mb-5 text-xs font-medium uppercase tracking-wider text-charcoal/50">Quote</h2>
+
+      <div class="flex gap-0 border-b border-charcoal/10 mb-7">
+        <button type="button" data-tab-btn="fr" class="admin-tab-btn active">🇫🇷 French</button>
+        <button type="button" data-tab-btn="en" class="admin-tab-btn">🇬🇧 English</button>
+        <button type="button" data-tab-btn="ar" class="admin-tab-btn">🇸🇦 Arabic</button>
+      </div>
+
+      <div data-tab-panel="fr">
+        <div class="admin-field">
+          <label>Quote (FR)</label>
+          <textarea name="quote_fr" rows="4" class="admin-input">{loc(doc.quote, "fr")}</textarea>
+        </div>
+      </div>
+      <div data-tab-panel="en" class="hidden">
+        <div class="admin-field">
+          <label>Quote (EN)</label>
+          <textarea name="quote_en" rows="4" class="admin-input">{loc(doc.quote, "en")}</textarea>
+        </div>
+      </div>
+      <div data-tab-panel="ar" class="hidden">
+        <div class="admin-field">
+          <label>Quote (AR)</label>
+          <textarea name="quote_ar" rows="4" class="admin-input" dir="rtl">{loc(doc.quote, "ar")}</textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Static -->
+    <div class="rounded-[1.5rem] border border-charcoal/10 bg-white/70 p-7 shadow-[0_8px_30px_rgba(31,37,34,0.06)]">
+      <h2 class="mb-5 text-xs font-medium uppercase tracking-wider text-charcoal/50">Author</h2>
+      <div class="grid gap-5 sm:grid-cols-2">
+        <div class="admin-field">
+          <label>Name</label>
+          <input name="name" class="admin-input" value={doc.name} required />
+        </div>
+        <div class="admin-field">
+          <label>Detail (e.g. Skin type)</label>
+          <input name="detail" class="admin-input" value={doc.detail ?? ""} />
+        </div>
+      </div>
+    </div>
+
+    <div class="flex justify-end gap-4">
+      <a href="/admin/testimonials" class="rounded-xl border border-charcoal/15 px-6 py-2.5 text-sm text-charcoal/60 hover:text-charcoal transition">Cancel</a>
+      <button type="submit" class="rounded-xl bg-charcoal px-8 py-2.5 text-sm font-medium text-cream transition hover:bg-charcoal/80">Save Changes</button>
+    </div>
+
+  </form>
+</AdminLayout>

@@ -1,0 +1,234 @@
+---
+import "@/styles/global.css";
+
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+const pathname = Astro.url.pathname;
+
+const nav = [
+  {
+    href: "/admin/dashboard",
+    label: "Dashboard",
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>`,
+  },
+  {
+    href: "/admin/hero",
+    label: "Hero Section",
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>`,
+  },
+  {
+    href: "/admin/products",
+    label: "Products",
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>`,
+    newHref: "/admin/products/new",
+  },
+  {
+    href: "/admin/testimonials",
+    label: "Testimonials",
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`,
+    newHref: "/admin/testimonials/new",
+  },
+  {
+    href: "/admin/concerns",
+    label: "Concerns",
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+    newHref: "/admin/concerns/new",
+  },
+  {
+    href: "/admin/ritual-steps",
+    label: "Ritual Steps",
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+    newHref: "/admin/ritual-steps/new",
+  },
+  {
+    href: "/admin/trust-points",
+    label: "Trust Points",
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`,
+    newHref: "/admin/trust-points/new",
+  },
+  {
+    href: "/admin/seo",
+    label: "SEO",
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
+  },
+  {
+    href: "/admin/footer",
+    label: "Footer",
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 15h18"/></svg>`,
+  },
+];
+---
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>{title} — KLARITÉ Admin</title>
+  </head>
+  <body class="min-h-screen bg-[#f5f3ef] font-body text-charcoal">
+
+    <!-- Mobile overlay -->
+    <div id="sidebar-overlay" class="fixed inset-0 z-20 bg-charcoal/30 backdrop-blur-sm hidden lg:hidden"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-30 flex w-64 flex-col bg-charcoal text-cream shadow-2xl transition-transform duration-300 -translate-x-full lg:translate-x-0">
+
+      <!-- Logo -->
+      <div class="flex items-center gap-3 px-6 py-6 border-b border-white/10">
+        <div>
+          <p class="font-display text-lg tracking-tight text-cream leading-none">KLARITÉ</p>
+          <p class="mt-0.5 text-[10px] uppercase tracking-widest text-cream/40">Admin Panel</p>
+        </div>
+      </div>
+
+      <!-- Nav -->
+      <nav class="flex-1 overflow-y-auto px-3 py-5 space-y-0.5">
+        {nav.map(({ href, label, icon }) => {
+          const active = pathname === href || (href !== "/admin/dashboard" && pathname.startsWith(href));
+          return (
+            <a
+              href={href}
+              class:list={[
+                "flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm transition-all",
+                active
+                  ? "bg-gold/20 text-cream font-medium"
+                  : "text-cream/55 hover:bg-white/8 hover:text-cream",
+              ]}
+            >
+              <span class:list={[active ? "text-gold" : "text-cream/40"]} set:html={icon} />
+              {label}
+              {active && <span class="ml-auto h-1.5 w-1.5 rounded-full bg-gold"></span>}
+            </a>
+          );
+        })}
+      </nav>
+
+      <!-- Bottom: sign out -->
+      <div class="border-t border-white/10 px-3 py-4">
+        <form method="POST" action="/admin/logout">
+          <button
+            type="submit"
+            class="flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-cream/50 transition hover:bg-white/8 hover:text-cream"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Sign out
+          </button>
+        </form>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <div class="lg:pl-64 min-h-screen flex flex-col">
+
+      <!-- Top bar (mobile + breadcrumb) -->
+      <header class="sticky top-0 z-10 flex items-center gap-4 border-b border-charcoal/8 bg-[#f5f3ef]/90 backdrop-blur-sm px-6 py-4">
+        <!-- Hamburger (mobile only) -->
+        <button
+          id="sidebar-toggle"
+          class="lg:hidden rounded-lg p-1.5 text-charcoal/60 hover:bg-charcoal/8 transition"
+          aria-label="Toggle sidebar"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+
+        <div class="flex items-center gap-2 text-sm text-charcoal/45">
+          <span class="font-display text-base text-charcoal">{title}</span>
+        </div>
+
+        <!-- Quick new product button -->
+        {pathname.startsWith("/admin/products") && !pathname.endsWith("/new") && (
+          <a
+            href="/admin/products/new"
+            class="ml-auto rounded-xl bg-charcoal px-4 py-2 text-xs font-medium text-cream transition hover:bg-charcoal/80"
+          >
+            + New Product
+          </a>
+        )}
+      </header>
+
+      <main class="flex-1 px-6 py-8 max-w-6xl w-full mx-auto">
+        <slot />
+      </main>
+    </div>
+
+  </body>
+
+  <style is:global>
+    .admin-tab-btn {
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      border-bottom: 2px solid transparent;
+      color: rgba(26,26,26,0.5);
+      transition: color 0.15s, border-color 0.15s;
+      white-space: nowrap;
+    }
+    .admin-tab-btn:hover { color: #1a1a1a; }
+    .admin-tab-btn.active { border-color: #c6a96b; color: #1a1a1a; font-weight: 500; }
+    .admin-field label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: rgba(26,26,26,0.55);
+      margin-bottom: 0.375rem;
+    }
+    .admin-input {
+      width: 100%;
+      border-radius: 0.75rem;
+      border: 1px solid rgba(26,26,26,0.15);
+      background: white;
+      padding: 0.625rem 1rem;
+      font-size: 0.875rem;
+      color: #1a1a1a;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .admin-input:focus {
+      border-color: rgba(198,169,107,0.6);
+      box-shadow: 0 0 0 3px rgba(198,169,107,0.15);
+    }
+  </style>
+
+  <script>
+    // Sidebar toggle (mobile)
+    const toggle = document.getElementById("sidebar-toggle");
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.getElementById("sidebar-overlay");
+
+    toggle?.addEventListener("click", () => {
+      sidebar?.classList.toggle("-translate-x-full");
+      overlay?.classList.toggle("hidden");
+    });
+    overlay?.addEventListener("click", () => {
+      sidebar?.classList.add("-translate-x-full");
+      overlay?.classList.add("hidden");
+    });
+
+    // Tab switching — group-aware
+    // Buttons with data-tab-group are handled by per-page scripts.
+    // Buttons without data-tab-group are scoped to their nearest [data-tab-card] ancestor.
+    document.addEventListener("DOMContentLoaded", () => {
+      document.querySelectorAll<HTMLElement>("[data-tab-btn]").forEach((btn) => {
+        if (btn.dataset.tabGroup) return;
+        btn.addEventListener("click", () => {
+          const tab = btn.dataset.tabBtn!;
+          const scope: Element = btn.closest("[data-tab-card]") ?? btn.closest("form") ?? document.body;
+          scope.querySelectorAll<HTMLElement>("[data-tab-btn]").forEach((b) => {
+            if (b.dataset.tabGroup) return;
+            b.classList.toggle("active", b === btn);
+          });
+          scope.querySelectorAll<HTMLElement>("[data-tab-panel]").forEach((p) => {
+            if (p.dataset.tabGroup) return;
+            p.classList.toggle("hidden", p.dataset.tabPanel !== tab);
+          });
+        });
+      });
+    });
+  </script>
+
+</html>
