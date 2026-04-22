@@ -33,6 +33,12 @@ export async function setupExperience() {
 
   gsap.registerPlugin(ScrollTrigger);
 
+  // Prevent browser from restoring scroll position — Lenis handles scroll itself
+  if ("scrollRestoration" in history) {
+    history.scrollRestoration = "manual";
+  }
+  window.scrollTo(0, 0);
+
   const lenis = new Lenis({
     duration: 1.0,
     smoothWheel: true,
