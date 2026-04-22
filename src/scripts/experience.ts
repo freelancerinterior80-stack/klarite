@@ -3,24 +3,16 @@ let cleanup: (() => void) | undefined;
 export async function setupExperience() {
   cleanup?.();
 
-  if (typeof window === "undefined") {
-    return;
-  }
+  if (typeof window === "undefined") return;
 
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const revealElements = Array.from(document.querySelectorAll<HTMLElement>("[data-reveal]"));
-  const scaleElements = Array.from(document.querySelectorAll<HTMLElement>("[data-scale-in]"));
-  const dragContainers = Array.from(document.querySelectorAll<HTMLElement>("[data-drag-scroll]"));
+  const revealElements  = Array.from(document.querySelectorAll<HTMLElement>("[data-reveal]"));
+  const scaleElements   = Array.from(document.querySelectorAll<HTMLElement>("[data-scale-in]"));
+  const dragContainers  = Array.from(document.querySelectorAll<HTMLElement>("[data-drag-scroll]"));
 
   if (prefersReducedMotion) {
-    revealElements.forEach((element) => {
-      element.style.opacity = "1";
-      element.style.transform = "none";
-    });
-    scaleElements.forEach((element) => {
-      element.style.transform = "none";
-      element.style.opacity = "1";
-    });
+    revealElements.forEach((el) => { el.style.opacity = "1"; el.style.transform = "none"; });
+    scaleElements.forEach((el)  => { el.style.opacity = "1"; el.style.transform = "none"; });
     cleanup = undefined;
     return;
   }
@@ -28,218 +20,183 @@ export async function setupExperience() {
   const [{ default: Lenis }, { gsap }, { ScrollTrigger }] = await Promise.all([
     import("lenis"),
     import("gsap"),
-    import("gsap/ScrollTrigger")
+    import("gsap/ScrollTrigger"),
   ]);
 
   gsap.registerPlugin(ScrollTrigger);
 
-  // Prevent browser from restoring scroll position — Lenis handles scroll itself
-  if ("scrollRestoration" in history) {
-    history.scrollRestoration = "manual";
-  }
+  // Prevent browser from restoring scroll position on refresh
+  if ("scrollRestoration" in history) history.scrollRestoration = "manual";
   window.scrollTo(0, 0);
 
   const lenis = new Lenis({
-    duration: 1.0,
+    lerp: 0.1,           // exponential decay — smoother than fixed duration
     smoothWheel: true,
     syncTouch: false,
     wheelMultiplier: 1,
     touchMultiplier: 2,
+    infinite: false,
   });
 
-  // Use GSAP's ticker as the single RAF driver — avoids double-loop jank
-  gsap.ticker.add((time) => {
-    lenis.raf(time * 1000);
-  });
+  // Single RAF driver — store reference so cleanup can remove it
+  const lenisRaf = (time: number) => lenis.raf(time * 1000);
+  gsap.ticker.add(lenisRaf);
   gsap.ticker.lagSmoothing(0);
-  lenis.on("scroll", ScrollTrigger.update);
 
-  const dragCleanups: Array<() => void> = [];
-  const hoverCleanups: Array<() => void> = [];
-  const floatTweens: Array<gsap.core.Tween> = [];
+  lenis.on("scroll", () => ScrollTrigger.update());
 
-  revealElements.forEach((element) => {
-    gsap.fromTo(
-      element,
+  // ── Reveal animations ──────────────────────────────────────────
+  revealElements.forEach((el) => {
+    gsap.fromTo(el,
+      { opacity: 0, y: 28 },
       {
-        opacity: 0,
-        y: 28
-      },
+        opacity: 1, y: 0,
+        duration: 1.4,
+        ease: "power3.out",
+        overwrite: "auto",
+        scrollTrigger: { trigger: el, start: "top 85%", once: true },
+      }
+    );
+  });
+
+  scaleElements.forEach((el) => {
+    gsap.fromTo(el,
+      { opacity: 0, scale: 0.97, y: 14 },
       {
-        opacity: 1,
-        y: 0,
+        opacity: 1, scale: 1, y: 0,
         duration: 1.5,
         ease: "power3.out",
-        scrollTrigger: {
-          trigger: element,
-          start: "top 82%",
-          once: true
-        }
+        overwrite: "auto",
+        scrollTrigger: { trigger: el, start: "top 86%", once: true },
       }
     );
   });
 
-  scaleElements.forEach((element) => {
-    gsap.fromTo(
-      element,
-      {
-        opacity: 0,
-        scale: 0.97,
-        y: 14
-      },
-      {
-        opacity: 1,
-        scale: 1,
-        y: 0,
-        duration: 1.6,
-        ease: "power3.out",
-        scrollTrigger: {
-          trigger: element,
-          start: "top 84%",
-          once: true
-        }
-      }
-    );
-  });
-
-  document.querySelectorAll<HTMLElement>("[data-float]").forEach((element, index) => {
-    const distance = Number(element.dataset.floatDistance ?? 18) + index * 2;
-    const duration = Number(element.dataset.floatDuration ?? 6.8) + index * 0.45;
-
+  // ── Float tweens ───────────────────────────────────────────────
+  const floatTweens: gsap.core.Tween[] = [];
+  document.querySelectorAll<HTMLElement>("[data-float]").forEach((el, i) => {
+    const distance = Number(el.dataset.floatDistance ?? 18) + i * 2;
+    const duration = Number(el.dataset.floatDuration ?? 6.8) + i * 0.45;
     floatTweens.push(
-      gsap.to(element, {
+      gsap.to(el, {
         y: -distance,
-        x: index % 2 === 0 ? 1.5 : -1.5,
+        x: i % 2 === 0 ? 1.5 : -1.5,
         repeat: -1,
         yoyo: true,
         ease: "sine.inOut",
-        duration
+        duration,
+        overwrite: "auto",
       })
     );
   });
 
-  document.querySelectorAll<HTMLElement>("[data-parallax]").forEach((element) => {
-    const shift = Number(element.dataset.parallax ?? 14);
-
-    gsap.fromTo(
-      element,
+  // ── Parallax — scrub > 1 smooths the catch-up lag ─────────────
+  document.querySelectorAll<HTMLElement>("[data-parallax]").forEach((el) => {
+    const shift = Number(el.dataset.parallax ?? 14);
+    gsap.fromTo(el,
       { yPercent: -shift },
       {
         yPercent: shift,
         ease: "none",
         scrollTrigger: {
-          trigger: element,
+          trigger: el,
           start: "top bottom",
           end: "bottom top",
-          scrub: true
-        }
+          scrub: 1.5,       // lag behind scroll slightly — avoids stutter
+        },
       }
     );
   });
 
+  // ── Luxe card tilt ─────────────────────────────────────────────
+  const hoverCleanups: Array<() => void> = [];
   document.querySelectorAll<HTMLElement>("[data-luxe-card]").forEach((card) => {
-    const media = card.querySelector<HTMLElement>("[data-luxe-media]");
-    const rotateXTo = gsap.quickTo(card, "rotateX", { duration: 0.42, ease: "power3.out" });
-    const rotateYTo = gsap.quickTo(card, "rotateY", { duration: 0.42, ease: "power3.out" });
-    const liftTo = gsap.quickTo(card, "y", { duration: 0.42, ease: "power3.out" });
-    const scaleTo = media ? gsap.quickTo(media, "scale", { duration: 0.5, ease: "power3.out" }) : undefined;
+    const media    = card.querySelector<HTMLElement>("[data-luxe-media]");
+    const rotateXTo = gsap.quickTo(card,  "rotateX", { duration: 0.42, ease: "power3.out" });
+    const rotateYTo = gsap.quickTo(card,  "rotateY", { duration: 0.42, ease: "power3.out" });
+    const liftTo    = gsap.quickTo(card,  "y",       { duration: 0.42, ease: "power3.out" });
+    const scaleTo   = media ? gsap.quickTo(media, "scale", { duration: 0.5, ease: "power3.out" }) : undefined;
 
-    const onPointerMove = (event: PointerEvent) => {
-      const rect = card.getBoundingClientRect();
-      const relativeX = (event.clientX - rect.left) / rect.width;
-      const relativeY = (event.clientY - rect.top) / rect.height;
-      const rotateY = (relativeX - 0.5) * 10;
-      const rotateX = (0.5 - relativeY) * 8;
-
-      rotateXTo(rotateX);
-      rotateYTo(rotateY);
+    const onMove  = (e: PointerEvent) => {
+      const r  = card.getBoundingClientRect();
+      const rx = (e.clientX - r.left) / r.width;
+      const ry = (e.clientY - r.top)  / r.height;
+      rotateXTo((0.5 - ry) * 8);
+      rotateYTo((rx - 0.5) * 10);
       liftTo(-8);
       scaleTo?.(1.02);
-      card.style.setProperty("--pointer-x", `${relativeX * 100}%`);
-      card.style.setProperty("--pointer-y", `${relativeY * 100}%`);
+      card.style.setProperty("--pointer-x", `${rx * 100}%`);
+      card.style.setProperty("--pointer-y", `${ry * 100}%`);
     };
-
-    const onPointerLeave = () => {
-      rotateXTo(0);
-      rotateYTo(0);
-      liftTo(0);
-      scaleTo?.(1);
+    const onLeave = () => {
+      rotateXTo(0); rotateYTo(0); liftTo(0); scaleTo?.(1);
       card.style.setProperty("--pointer-x", "50%");
       card.style.setProperty("--pointer-y", "22%");
     };
 
-    card.addEventListener("pointermove", onPointerMove);
-    card.addEventListener("pointerleave", onPointerLeave);
-
+    card.addEventListener("pointermove",  onMove);
+    card.addEventListener("pointerleave", onLeave);
     hoverCleanups.push(() => {
-      card.removeEventListener("pointermove", onPointerMove);
-      card.removeEventListener("pointerleave", onPointerLeave);
+      card.removeEventListener("pointermove",  onMove);
+      card.removeEventListener("pointerleave", onLeave);
     });
   });
 
+  // ── Drag-scroll carousels ──────────────────────────────────────
+  const dragCleanups: Array<() => void> = [];
   dragContainers.forEach((container) => {
     let isDragging = false;
     let startX = 0;
     let startLeft = 0;
 
-    const getPoint = (event: PointerEvent) => event.clientX;
-
-    const onPointerDown = (event: PointerEvent) => {
+    const onDown  = (e: PointerEvent) => {
       isDragging = true;
-      startX = getPoint(event);
+      startX = e.clientX;
       startLeft = container.scrollLeft;
       container.classList.add("is-dragging");
-      container.setPointerCapture?.(event.pointerId);
+      container.setPointerCapture?.(e.pointerId);
     };
-
-    const onPointerMove = (event: PointerEvent) => {
-      if (!isDragging) {
-        return;
-      }
-
-      event.preventDefault();
-      const delta = (getPoint(event) - startX) * 1.2;
+    const onMove  = (e: PointerEvent) => {
+      if (!isDragging) return;
+      e.preventDefault();
       gsap.to(container, {
-        scrollLeft: startLeft - delta,
+        scrollLeft: startLeft - (e.clientX - startX) * 1.2,
         duration: 0.32,
         ease: "power2.out",
-        overwrite: "auto"
+        overwrite: "auto",
       });
     };
-
-    const stopDragging = (event?: PointerEvent) => {
-      if (!isDragging) {
-        return;
-      }
-
+    const onStop  = (e?: PointerEvent) => {
+      if (!isDragging) return;
       isDragging = false;
       container.classList.remove("is-dragging");
-      if (event) {
-        container.releasePointerCapture?.(event.pointerId);
-      }
+      if (e) container.releasePointerCapture?.(e.pointerId);
     };
 
-    container.addEventListener("pointerdown", onPointerDown);
-    container.addEventListener("pointermove", onPointerMove);
-    container.addEventListener("pointerup", stopDragging);
-    container.addEventListener("pointerleave", stopDragging);
-    container.addEventListener("pointercancel", stopDragging);
+    container.addEventListener("pointerdown",  onDown);
+    container.addEventListener("pointermove",  onMove);
+    container.addEventListener("pointerup",    onStop);
+    container.addEventListener("pointerleave", onStop);
+    container.addEventListener("pointercancel",onStop);
 
     dragCleanups.push(() => {
-      container.removeEventListener("pointerdown", onPointerDown);
-      container.removeEventListener("pointermove", onPointerMove);
-      container.removeEventListener("pointerup", stopDragging);
-      container.removeEventListener("pointerleave", stopDragging);
-      container.removeEventListener("pointercancel", stopDragging);
+      container.removeEventListener("pointerdown",  onDown);
+      container.removeEventListener("pointermove",  onMove);
+      container.removeEventListener("pointerup",    onStop);
+      container.removeEventListener("pointerleave", onStop);
+      container.removeEventListener("pointercancel",onStop);
     });
   });
 
+  // Ensure ScrollTrigger positions are correct after everything is set up
+  ScrollTrigger.refresh();
+
   cleanup = () => {
-    gsap.ticker.remove(lenis.raf);
+    gsap.ticker.remove(lenisRaf);   // remove stored reference, not anonymous fn
     lenis.destroy();
-    floatTweens.forEach((tween) => tween.kill());
-    dragCleanups.forEach((destroy) => destroy());
-    hoverCleanups.forEach((destroy) => destroy());
-    ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
+    floatTweens.forEach((t) => t.kill());
+    dragCleanups.forEach((fn) => fn());
+    hoverCleanups.forEach((fn) => fn());
+    ScrollTrigger.getAll().forEach((t) => t.kill());
   };
 }
