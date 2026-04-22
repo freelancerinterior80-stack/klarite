@@ -34,23 +34,23 @@ export async function setupExperience() {
   gsap.registerPlugin(ScrollTrigger);
 
   const lenis = new Lenis({
-    duration: 1.3,
+    duration: 1.0,
     smoothWheel: true,
-    syncTouch: false
+    syncTouch: false,
+    wheelMultiplier: 1,
+    touchMultiplier: 2,
   });
 
-  let frame = 0;
+  // Use GSAP's ticker as the single RAF driver — avoids double-loop jank
+  gsap.ticker.add((time) => {
+    lenis.raf(time * 1000);
+  });
+  gsap.ticker.lagSmoothing(0);
+  lenis.on("scroll", ScrollTrigger.update);
+
   const dragCleanups: Array<() => void> = [];
   const hoverCleanups: Array<() => void> = [];
   const floatTweens: Array<gsap.core.Tween> = [];
-
-  const raf = (time: number) => {
-    lenis.raf(time);
-    frame = requestAnimationFrame(raf);
-  };
-
-  frame = requestAnimationFrame(raf);
-  lenis.on("scroll", ScrollTrigger.update);
 
   revealElements.forEach((element) => {
     gsap.fromTo(
@@ -229,7 +229,7 @@ export async function setupExperience() {
   });
 
   cleanup = () => {
-    cancelAnimationFrame(frame);
+    gsap.ticker.remove(lenis.raf);
     lenis.destroy();
     floatTweens.forEach((tween) => tween.kill());
     dragCleanups.forEach((destroy) => destroy());
