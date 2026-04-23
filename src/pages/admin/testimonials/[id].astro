@@ -8,29 +8,51 @@ const loc = (arr: any[] | null | undefined, key: string) =>
   arr?.find((i: any) => i._key === key)?.value ?? "";
 
 let error = "";
+let successMsg = "";
 
 if (Astro.request.method === "POST") {
   const form = await Astro.request.formData();
-  try {
-    await writeClient
-      .patch(id!)
-      .set({
-        'quote[_key=="fr"].value': form.get("quote_fr") as string,
-        'quote[_key=="en"].value': form.get("quote_en") as string,
-        'quote[_key=="ar"].value': form.get("quote_ar") as string,
-        name:   form.get("name") as string,
-        detail: form.get("detail") as string,
-      })
-      .commit();
+  const action = form.get("_action") as string | null;
 
-    return Astro.redirect("/admin/testimonials?saved=1");
+  try {
+    if (action === "upload-photo") {
+      const file = form.get("photo") as File;
+      if (file && file.size > 0) {
+        const buffer = Buffer.from(await file.arrayBuffer());
+        const asset = await writeClient.assets.upload("image", buffer, {
+          filename: file.name,
+          contentType: file.type,
+        });
+        await writeClient
+          .patch(id!)
+          .set({ photo: { _type: "image", asset: { _type: "reference", _ref: asset._id } } })
+          .commit();
+        successMsg = "Photo uploaded.";
+      }
+    } else if (action === "remove-photo") {
+      await writeClient.patch(id!).unset(["photo"]).commit();
+      successMsg = "Photo removed.";
+    } else {
+      await writeClient
+        .patch(id!)
+        .set({
+          'quote[_key=="fr"].value': form.get("quote_fr") as string,
+          'quote[_key=="en"].value': form.get("quote_en") as string,
+          'quote[_key=="ar"].value': form.get("quote_ar") as string,
+          name:   form.get("name") as string,
+          detail: form.get("detail") as string,
+        })
+        .commit();
+
+      return Astro.redirect("/admin/testimonials?saved=1");
+    }
   } catch (e) {
     error = "Save failed. Please try again.";
   }
 }
 
 const doc = await writeClient.fetch(
-  `*[_id == $id][0]{ _id, name, detail, order, quote }`,
+  `*[_id == $id][0]{ _id, name, detail, order, quote, "photoUrl": photo.asset->url }`,
   { id }
 );
 
@@ -47,6 +69,9 @@ if (!doc) return Astro.redirect("/admin/testimonials");
 
   {error && (
     <div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm text-red-700">{error}</div>
+  )}
+  {successMsg && (
+    <div class="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm text-emerald-700">{successMsg}</div>
   )}
 
   <form method="POST" class="space-y-8">
@@ -102,4 +127,59 @@ if (!doc) return Astro.redirect("/admin/testimonials");
     </div>
 
   </form>
+
+  <!-- Photo section — separate form -->
+  <div class="mt-8 rounded-[1.5rem] border border-charcoal/10 bg-white/70 p-7 shadow-[0_8px_30px_rgba(31,37,34,0.06)]">
+    <h2 class="mb-1 text-xs font-medium uppercase tracking-wider text-charcoal/50">Customer Photo</h2>
+    <p class="mb-6 text-xs text-charcoal/40">Optional. If uploaded, a circular avatar appears next to the customer name on the site.</p>
+
+    {doc.photoUrl ? (
+      <div class="flex items-center gap-6 mb-6">
+        <img
+          src={doc.photoUrl + "?w=120&h=120&fit=crop&auto=format"}
+          alt={doc.name}
+          width="60" height="60"
+          class="h-16 w-16 rounded-full object-cover ring-2 ring-gold/30"
+        />
+        <div>
+          <p class="text-sm font-medium text-charcoal">{doc.name}</p>
+          <p class="text-xs text-charcoal/50 mt-0.5">Photo currently set</p>
+        </div>
+        <form method="POST" class="ml-auto">
+          <input type="hidden" name="_action" value="remove-photo" />
+          <button
+            type="submit"
+            class="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-xs font-medium text-red-600 hover:bg-red-100 transition"
+            onclick="return confirm('Remove this photo?')"
+          >
+            Remove Photo
+          </button>
+        </form>
+      </div>
+    ) : (
+      <p class="mb-4 text-sm text-charcoal/40 italic">No photo uploaded yet.</p>
+    )}
+
+    <form method="POST" enctype="multipart/form-data" class="flex items-end gap-4">
+      <input type="hidden" name="_action" value="upload-photo" />
+      <div class="admin-field flex-1 mb-0">
+        <label>Upload Photo</label>
+        <input
+          type="file"
+          name="photo"
+          accept="image/jpeg,image/png,image/webp"
+          required
+          class="block w-full rounded-xl border border-charcoal/15 bg-white px-4 py-3 text-sm text-charcoal/70 file:mr-4 file:rounded-lg file:border-0 file:bg-charcoal file:px-4 file:py-1.5 file:text-xs file:font-medium file:text-cream hover:file:bg-charcoal/80 cursor-pointer"
+        />
+        <p class="mt-1 text-xs text-charcoal/40">JPEG, PNG or WebP. Square crop recommended (e.g. 400×400 px).</p>
+      </div>
+      <button
+        type="submit"
+        class="shrink-0 rounded-xl bg-charcoal px-6 py-2.5 text-sm font-medium text-cream transition hover:bg-charcoal/80 mb-6"
+      >
+        Upload
+      </button>
+    </form>
+  </div>
+
 </AdminLayout>

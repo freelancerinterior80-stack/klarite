@@ -16,7 +16,8 @@ export const productsQuery = `*[_type == "product"] | order(_createdAt asc) {
 export const testimonialsQuery = `*[_type == "testimonial"] | order(order asc) {
   "quote": coalesce(quote[_key == $locale][0].value, quote[_key == "fr"][0].value),
   name,
-  detail
+  detail,
+  "photoUrl": photo.asset->url
 }`;
 
 export const concernsQuery = `*[_type == "concern"] | order(order asc) {
