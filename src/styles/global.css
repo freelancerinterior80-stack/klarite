@@ -356,11 +356,16 @@ img {
   background: #1c1c1c;
 }
 
-/* Size modifiers — applied by JS from the bannerSize field */
+/* Height modifiers */
 .campaign-slider--small      { min-height: 280px; max-height: 320px; }
 .campaign-slider--medium     { min-height: clamp(360px, 45vh, 500px); }
 .campaign-slider--large      { min-height: clamp(480px, 70vh, 760px); }
 .campaign-slider--fullscreen { min-height: 100vh; }
+
+/* Width modifiers */
+.campaign-slider--width-full      { width: 100%; }
+.campaign-slider--width-contained { max-width: 90rem; margin-inline: auto; border-radius: 1.5rem; overflow: hidden; }
+.campaign-slider--width-narrow    { max-width: 60%; margin-inline: auto; border-radius: 1.5rem; overflow: hidden; }
 
 .campaign-slide {
   position: absolute;

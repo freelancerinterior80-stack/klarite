@@ -23,7 +23,7 @@ export const campaignType = defineType({
     }),
     defineField({
       name: "bannerSize",
-      title: "Banner Size",
+      title: "Banner Height",
       type: "string",
       initialValue: "large",
       options: {
@@ -32,6 +32,20 @@ export const campaignType = defineType({
           { title: "Medium — compact (~480px)",     value: "medium" },
           { title: "Large — immersive (default)",   value: "large" },
           { title: "Full Screen — 100vh takeover",  value: "fullscreen" },
+        ],
+        layout: "radio",
+      },
+    }),
+    defineField({
+      name: "bannerWidth",
+      title: "Banner Width",
+      type: "string",
+      initialValue: "full",
+      options: {
+        list: [
+          { title: "Full — edge to edge (default)", value: "full" },
+          { title: "Contained — matches site width", value: "contained" },
+          { title: "Narrow — centered 60% wide", value: "narrow" },
         ],
         layout: "radio",
       },

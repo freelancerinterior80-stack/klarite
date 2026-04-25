@@ -300,8 +300,9 @@ const benefits = [
           var hero = document.getElementById("hero-section");
           if (!banner || !hero) return;
 
-          // Apply size modifier class
+          // Apply height + width modifier classes
           banner.classList.add("campaign-slider--" + (campaign.bannerSize || "large"));
+          banner.classList.add("campaign-slider--width-" + (campaign.bannerWidth || "full"));
 
           // Build slides HTML
           var slidesHtml = slides.map(function (slide, i) {
