@@ -1,7 +1,7 @@
 export const prerender = false;
 
 import type { APIRoute } from "astro";
-import { client } from "@/sanity/client";
+import { writeClient as client } from "@/sanity/write-client";
 
 export const GET: APIRoute = async ({ request }) => {
   const locale = new URL(request.url).searchParams.get("locale") ?? "fr";
