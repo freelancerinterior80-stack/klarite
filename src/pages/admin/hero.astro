@@ -98,6 +98,14 @@ if (Astro.request.method === "POST") {
         error = "No badge image selected.";
       }
 
+    } else if (action === "save-typography") {
+      await writeClient.patch("heroSettings").set({
+        headlineFontFamily: (form.get("headlineFontFamily") as string) ?? "",
+        headlineFontSize:   (form.get("headlineFontSize")   as string) ?? "",
+        headlineFontWeight: (form.get("headlineFontWeight") as string) ?? "",
+      }).commit();
+      successMsg = "Typography saved.";
+
     } else if (action === "save-ticker") {
       const raw = (form.get("tickerPhrases") as string) ?? "";
       const phrases = raw.split("\n").map((s: string) => s.trim()).filter(Boolean);
@@ -171,6 +179,9 @@ const doc = await writeClient.fetch(`*[_id == "heroSettings"][0]{
   "badgeImageUrl": badgeImage.asset->url,
   "heroVideoFileUrl": heroVideoFile.asset->url,
   tickerPhrases,
+  headlineFontFamily,
+  headlineFontSize,
+  headlineFontWeight,
 }`);
 
 const v = (field: string, locale: string) => loc(doc?.[field], locale);
@@ -346,6 +357,98 @@ const currentMediaType: string = doc?.mediaType ?? "image";
     </div>
   </div>
 
+  <!-- ── HEADLINE TYPOGRAPHY ──────────────────────────────────── -->
+  <div class="rounded-[1.5rem] border border-charcoal/10 bg-white/70 p-7 shadow-[0_8px_30px_rgba(31,37,34,0.06)] mb-6">
+    <h2 class="mb-1 text-xs font-medium uppercase tracking-wider text-charcoal/50">Headline Typography</h2>
+    <p class="mb-6 text-xs text-charcoal/40">Controls the font family, size, and weight of the large hero headline. Uses fonts already installed on the visitor's device — no loading delay.</p>
+
+    <form method="POST" class="space-y-6" id="typo-form">
+      <input type="hidden" name="_action" value="save-typography" />
+
+      <div class="grid gap-5 sm:grid-cols-3">
+
+        <!-- Font family -->
+        <div class="admin-field">
+          <label>Font Family</label>
+          <select name="headlineFontFamily" id="typo-font" class="admin-input">
+            <optgroup label="— Web fonts (already loaded) —">
+              <option value="'Playfair Display', Georgia, serif" selected={(!doc?.headlineFontFamily || doc.headlineFontFamily === "'Playfair Display', Georgia, serif") || undefined}>Playfair Display (current)</option>
+              <option value="Inter, Arial, sans-serif" selected={doc?.headlineFontFamily === "Inter, Arial, sans-serif" || undefined}>Inter</option>
+              <option value="Cairo, Arial, sans-serif" selected={doc?.headlineFontFamily === "Cairo, Arial, sans-serif" || undefined}>Cairo (Arabic)</option>
+            </optgroup>
+            <optgroup label="— System serif —">
+              <option value="Georgia, serif" selected={doc?.headlineFontFamily === "Georgia, serif" || undefined}>Georgia</option>
+              <option value="'Palatino Linotype', Palatino, serif" selected={doc?.headlineFontFamily === "'Palatino Linotype', Palatino, serif" || undefined}>Palatino</option>
+              <option value="'Times New Roman', Times, serif" selected={doc?.headlineFontFamily === "'Times New Roman', Times, serif" || undefined}>Times New Roman</option>
+              <option value="Garamond, serif" selected={doc?.headlineFontFamily === "Garamond, serif" || undefined}>Garamond</option>
+              <option value="'Book Antiqua', Palatino, serif" selected={doc?.headlineFontFamily === "'Book Antiqua', Palatino, serif" || undefined}>Book Antiqua</option>
+              <option value="Baskerville, serif" selected={doc?.headlineFontFamily === "Baskerville, serif" || undefined}>Baskerville</option>
+            </optgroup>
+            <optgroup label="— System sans-serif —">
+              <option value="'Helvetica Neue', Helvetica, Arial, sans-serif" selected={doc?.headlineFontFamily === "'Helvetica Neue', Helvetica, Arial, sans-serif" || undefined}>Helvetica Neue</option>
+              <option value="Arial, Helvetica, sans-serif" selected={doc?.headlineFontFamily === "Arial, Helvetica, sans-serif" || undefined}>Arial</option>
+              <option value="Verdana, Geneva, sans-serif" selected={doc?.headlineFontFamily === "Verdana, Geneva, sans-serif" || undefined}>Verdana</option>
+              <option value="'Trebuchet MS', Arial, sans-serif" selected={doc?.headlineFontFamily === "'Trebuchet MS', Arial, sans-serif" || undefined}>Trebuchet MS</option>
+              <option value="'Gill Sans', Optima, sans-serif" selected={doc?.headlineFontFamily === "'Gill Sans', Optima, sans-serif" || undefined}>Gill Sans</option>
+              <option value="Optima, 'Segoe UI', sans-serif" selected={doc?.headlineFontFamily === "Optima, 'Segoe UI', sans-serif" || undefined}>Optima</option>
+              <option value="'Century Gothic', Futura, sans-serif" selected={doc?.headlineFontFamily === "'Century Gothic', Futura, sans-serif" || undefined}>Century Gothic</option>
+              <option value="'Segoe UI', Arial, sans-serif" selected={doc?.headlineFontFamily === "'Segoe UI', Arial, sans-serif" || undefined}>Segoe UI</option>
+              <option value="Tahoma, Geneva, sans-serif" selected={doc?.headlineFontFamily === "Tahoma, Geneva, sans-serif" || undefined}>Tahoma</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <!-- Font size -->
+        <div class="admin-field">
+          <label>Font Size — <span id="typo-size-display">{doc?.headlineFontSize ?? "7.5"}rem</span></label>
+          <input
+            type="range"
+            name="headlineFontSize"
+            id="typo-size"
+            min="2"
+            max="10"
+            step="0.1"
+            value={doc?.headlineFontSize ?? "7.5"}
+            class="mt-3 w-full accent-gold"
+          />
+          <div class="mt-1 flex justify-between text-[10px] text-charcoal/35">
+            <span>2 rem (small)</span><span>10 rem (huge)</span>
+          </div>
+        </div>
+
+        <!-- Font weight -->
+        <div class="admin-field">
+          <label>Font Weight</label>
+          <select name="headlineFontWeight" id="typo-weight" class="admin-input">
+            <option value="400" selected={(!doc?.headlineFontWeight || doc.headlineFontWeight === "400") || undefined}>400 — Regular</option>
+            <option value="500" selected={doc?.headlineFontWeight === "500" || undefined}>500 — Medium</option>
+            <option value="600" selected={doc?.headlineFontWeight === "600" || undefined}>600 — SemiBold</option>
+            <option value="700" selected={doc?.headlineFontWeight === "700" || undefined}>700 — Bold</option>
+            <option value="800" selected={doc?.headlineFontWeight === "800" || undefined}>800 — ExtraBold</option>
+            <option value="900" selected={doc?.headlineFontWeight === "900" || undefined}>900 — Black</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Live preview -->
+      <div class="rounded-xl border border-charcoal/10 bg-[#f8f6f2] px-6 py-5 overflow-hidden">
+        <p class="mb-3 text-[10px] uppercase tracking-widest text-charcoal/35">Live Preview</p>
+        <p
+          id="typo-preview"
+          style={`font-family:${doc?.headlineFontFamily ?? "'Playfair Display', Georgia, serif"}; font-size: clamp(1.6rem, 4vw, ${doc?.headlineFontSize ?? "7.5"}rem); font-weight:${doc?.headlineFontWeight ?? "400"}; line-height:1.05; color:#1a1a1a;`}
+        >
+          {val("headline", "fr", "Quiet luxury for skin that looks luminous and composed.")}
+        </p>
+      </div>
+
+      <div class="flex justify-end">
+        <button type="submit" class="rounded-xl bg-charcoal px-6 py-2 text-xs font-medium text-cream transition hover:bg-charcoal/80">
+          Save Typography
+        </button>
+      </div>
+    </form>
+  </div>
+
   <!-- ── TICKER PHRASES ───────────────────────────────────────── -->
   <div class="rounded-[1.5rem] border border-charcoal/10 bg-white/70 p-7 shadow-[0_8px_30px_rgba(31,37,34,0.06)] mb-6">
     <h2 class="mb-1 text-xs font-medium uppercase tracking-wider text-charcoal/50">Ticker Phrases</h2>
@@ -476,6 +579,28 @@ const currentMediaType: string = doc?.mediaType ?? "image";
 </AdminLayout>
 
 <script>
+  // ── Typography live preview ─────────────────────────────────
+  const preview  = document.getElementById("typo-preview") as HTMLElement | null;
+  const fontSel  = document.getElementById("typo-font")    as HTMLSelectElement | null;
+  const sizeRange = document.getElementById("typo-size")   as HTMLInputElement | null;
+  const sizeDisp = document.getElementById("typo-size-display") as HTMLElement | null;
+  const weightSel = document.getElementById("typo-weight") as HTMLSelectElement | null;
+
+  function updatePreview() {
+    if (!preview) return;
+    const ff = fontSel?.value ?? "'Playfair Display', Georgia, serif";
+    const fs = sizeRange?.value ?? "7.5";
+    const fw = weightSel?.value ?? "400";
+    if (sizeDisp) sizeDisp.textContent = `${fs}rem`;
+    preview.style.fontFamily  = ff;
+    preview.style.fontSize    = `clamp(1.6rem, 4vw, ${fs}rem)`;
+    preview.style.fontWeight  = fw;
+  }
+
+  fontSel?.addEventListener("change", updatePreview);
+  sizeRange?.addEventListener("input", updatePreview);
+  weightSel?.addEventListener("change", updatePreview);
+
   document.querySelectorAll<HTMLElement>("[data-tab-btn][data-tab-group]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const locale = btn.dataset.tabBtn!;

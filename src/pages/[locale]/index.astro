@@ -42,6 +42,9 @@ const heroQuery = `*[_id == "heroSettings"][0]{
   "badgeLabel":     badgeLabel[_key == $locale][0].value,
   "badgeTitle":     badgeTitle[_key == $locale][0].value,
   tickerPhrases,
+  headlineFontFamily,
+  headlineFontSize,
+  headlineFontWeight,
 }`;
 
 const [products, testimonials, ritualSteps, seoData, heroData] = await Promise.all([
@@ -73,6 +76,9 @@ const hero = {
   formulaText:    heroData?.formulaText    || "Cushion-soft hydration with a satin glow.",
   badgeLabel:     heroData?.badgeLabel     || "Signature Care",
   badgeTitle:     heroData?.badgeTitle     || "Face Cream",
+  headlineFontFamily: heroData?.headlineFontFamily || "'Playfair Display', Georgia, serif",
+  headlineFontSize:   heroData?.headlineFontSize   || "7.5",
+  headlineFontWeight: heroData?.headlineFontWeight || "400",
 };
 
 const defaultTicker = [
@@ -161,7 +167,7 @@ const benefits = [
 
         <h1
           class="section-title mt-6 text-charcoal"
-          style="font-size: clamp(3.2rem, 7vw, 7.5rem); max-width: 12ch; line-height: 1.04;"
+          style={`font-family:${hero.headlineFontFamily}; font-size:clamp(3.2rem, 7vw, ${hero.headlineFontSize}rem); font-weight:${hero.headlineFontWeight}; max-width:12ch; line-height:1.04;`}
         >
           {hero.headline}
         </h1>
