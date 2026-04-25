@@ -20,12 +20,17 @@ if (Astro.request.method === "POST") {
     // ── Details ──────────────────────────────────────────────────────
     if (action === "save-details") {
       await writeClient.patch(id).set({
-        title:      form.get("title")      as string,
-        isActive:   form.get("isActive") === "true",
+        title:    form.get("title")    as string,
+        isActive: form.get("isActive") === "true",
+      }).commit();
+      successMsg = "Campaign details saved.";
+
+    } else if (action === "save-dimensions") {
+      await writeClient.patch(id).set({
         bannerSize:  (form.get("bannerSize")  as string) || "large",
         bannerWidth: (form.get("bannerWidth") as string) || "full",
       }).commit();
-      successMsg = "Campaign details saved.";
+      successMsg = "Banner dimensions saved.";
     }
 
     // ── Upload slide image (0, 1, or 2) ──────────────────────────────
@@ -198,9 +203,7 @@ const slideSlots = [0, 1, 2].map((i) => slides[i] ?? null);
     <h2 class="mb-1 text-xs font-medium uppercase tracking-wider text-charcoal/50">Banner Dimensions</h2>
     <p class="mb-6 text-xs text-charcoal/40">Control how wide and tall the campaign banner appears on the site.</p>
     <form method="POST">
-      <input type="hidden" name="_action" value="save-details" />
-      <input type="hidden" name="title" value={doc.title ?? ""} />
-      <input type="hidden" name="isActive" value={doc.isActive ? "true" : "false"} />
+      <input type="hidden" name="_action" value="save-dimensions" />
 
       <!-- Height -->
       <p class="mb-3 text-xs font-medium text-charcoal/60 uppercase tracking-wider">Height</p>

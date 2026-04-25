@@ -356,11 +356,11 @@ img {
   background: #1c1c1c;
 }
 
-/* Height modifiers */
-.campaign-slider--small      { min-height: 280px; max-height: 320px; }
-.campaign-slider--medium     { min-height: clamp(360px, 45vh, 500px); }
-.campaign-slider--large      { min-height: clamp(480px, 70vh, 760px); }
-.campaign-slider--fullscreen { min-height: 100vh; }
+/* Height modifiers — use height (not min-height) so slides can't push past it */
+.campaign-slider--small      { height: 280px; }
+.campaign-slider--medium     { height: clamp(360px, 45vh, 500px); }
+.campaign-slider--large      { height: clamp(480px, 70vh, 760px); }
+.campaign-slider--fullscreen { height: 100vh; }
 
 /* Width modifiers */
 .campaign-slider--width-full      { width: 100%; }
