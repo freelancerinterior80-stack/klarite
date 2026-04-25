@@ -352,10 +352,15 @@ img {
 .campaign-slider {
   position: relative;
   width: 100%;
-  min-height: clamp(480px, 70vh, 760px);
   overflow: hidden;
   background: #1c1c1c;
 }
+
+/* Size modifiers — applied by JS from the bannerSize field */
+.campaign-slider--small      { min-height: 280px; max-height: 320px; }
+.campaign-slider--medium     { min-height: clamp(360px, 45vh, 500px); }
+.campaign-slider--large      { min-height: clamp(480px, 70vh, 760px); }
+.campaign-slider--fullscreen { min-height: 100vh; }
 
 .campaign-slide {
   position: absolute;

@@ -20,8 +20,9 @@ if (Astro.request.method === "POST") {
     // ── Details ──────────────────────────────────────────────────────
     if (action === "save-details") {
       await writeClient.patch(id).set({
-        title:    form.get("title")    as string,
-        isActive: form.get("isActive") === "true",
+        title:      form.get("title")      as string,
+        isActive:   form.get("isActive") === "true",
+        bannerSize: (form.get("bannerSize") as string) || "large",
       }).commit();
       successMsg = "Campaign details saved.";
     }
@@ -101,7 +102,7 @@ if (Astro.request.method === "POST") {
 
 // Fetch current doc
 const doc = await writeClient.fetch(
-  `*[_id == $id][0]{ _id, title, isActive, slides[]{ ..., "imageUrl": image.asset->url } }`,
+  `*[_id == $id][0]{ _id, title, isActive, bannerSize, slides[]{ ..., "imageUrl": image.asset->url } }`,
   { id }
 );
 
@@ -186,6 +187,46 @@ const slideSlots = [0, 1, 2].map((i) => slides[i] ?? null);
       <div class="flex justify-end">
         <button type="submit" class="rounded-xl bg-charcoal px-8 py-2.5 text-sm font-medium text-cream transition hover:bg-charcoal/80">
           Save Details
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ── Banner Size ──────────────────────────────────────────────── -->
+  <div class="mb-8 rounded-[1.5rem] border border-charcoal/10 bg-white/70 p-7 shadow-[0_8px_30px_rgba(31,37,34,0.06)]">
+    <h2 class="mb-1 text-xs font-medium uppercase tracking-wider text-charcoal/50">Banner Size</h2>
+    <p class="mb-6 text-xs text-charcoal/40">Controls how tall the campaign banner appears on the site.</p>
+    <form method="POST">
+      <input type="hidden" name="_action" value="save-details" />
+      <input type="hidden" name="title" value={doc.title ?? ""} />
+      <input type="hidden" name="isActive" value={doc.isActive ? "true" : "false"} />
+
+      {(() => {
+        const sizes = [
+          { value: "small",      label: "Small",       sub: "~280px strip" },
+          { value: "medium",     label: "Medium",      sub: "~480px compact" },
+          { value: "large",      label: "Large",       sub: "default" },
+          { value: "fullscreen", label: "Full Screen", sub: "100vh takeover" },
+        ];
+        const current = doc.bannerSize ?? "large";
+        return (
+          <div class="flex flex-wrap gap-3">
+            {sizes.map(({ value, label, sub }) => (
+              <label class="cursor-pointer">
+                <input type="radio" name="bannerSize" value={value} checked={current === value} class="sr-only peer" />
+                <div class="rounded-xl border-2 px-5 py-3 text-center transition-all peer-checked:border-charcoal peer-checked:bg-charcoal peer-checked:text-cream border-charcoal/15 hover:border-charcoal/30">
+                  <p class="text-sm font-medium">{label}</p>
+                  <p class="text-[0.65rem] opacity-60 mt-0.5">{sub}</p>
+                </div>
+              </label>
+            ))}
+          </div>
+        );
+      })()}
+
+      <div class="mt-5 flex justify-end">
+        <button type="submit" class="rounded-xl bg-charcoal px-6 py-2 text-xs font-medium text-cream transition hover:bg-charcoal/80">
+          Save Size
         </button>
       </div>
     </form>

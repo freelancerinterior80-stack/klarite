@@ -8,6 +8,7 @@ export const GET: APIRoute = async ({ request }) => {
 
   const campaign = await client.fetch(
     `*[_type == "campaign" && isActive == true] | order(_createdAt desc) [0] {
+      bannerSize,
       "slides": slides[] {
         "imageUrl": image.asset->url,
         "headline": headline[_key == $locale][0].value,
