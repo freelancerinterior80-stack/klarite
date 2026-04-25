@@ -17,6 +17,9 @@ const raw = await client.fetch(
     privacyUrl,
     termsUrl,
     shippingUrl,
+    instagramUrl,
+    tiktokUrl,
+    facebookUrl,
   }`,
   { locale }
 );
@@ -31,7 +34,28 @@ const footer = {
   privacyUrl:     raw?.privacyUrl     || null,
   termsUrl:       raw?.termsUrl       || null,
   shippingUrl:    raw?.shippingUrl    || null,
+  instagramUrl:   raw?.instagramUrl   || null,
+  tiktokUrl:      raw?.tiktokUrl      || null,
+  facebookUrl:    raw?.facebookUrl    || null,
 };
+
+const socialLinks = [
+  {
+    url:   footer.instagramUrl,
+    label: "Instagram",
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>`,
+  },
+  {
+    url:   footer.tiktokUrl,
+    label: "TikTok",
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.27 8.27 0 0 0 4.84 1.54V6.78a4.85 4.85 0 0 1-1.07-.09z"/></svg>`,
+  },
+  {
+    url:   footer.facebookUrl,
+    label: "Facebook",
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>`,
+  },
+].filter(s => s.url);
 ---
 
 <footer class="px-4 pb-8 pt-12 sm:px-6 lg:px-10">
@@ -44,6 +68,20 @@ const footer = {
       <p class="mt-4 max-w-xl text-sm leading-7 text-charcoal/66 sm:text-base">
         {footer.brandCopy}
       </p>
+      {socialLinks.length > 0 && (
+        <div class="mt-6 flex items-center gap-3">
+          {socialLinks.map(({ url, label, icon }) => (
+            <a
+              href={url!}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={label}
+              class="flex h-9 w-9 items-center justify-center rounded-full border border-charcoal/12 text-charcoal/50 transition-all duration-300 hover:border-charcoal/30 hover:text-charcoal hover:-translate-y-0.5"
+              set:html={icon}
+            />
+          ))}
+        </div>
+      )}
     </div>
 
     <!-- Explore column -->

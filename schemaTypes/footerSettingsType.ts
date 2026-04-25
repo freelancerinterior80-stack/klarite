@@ -41,6 +41,26 @@ export const footerSettingsType = defineType({
       description: "Third line in the contact column.",
     }),
 
+    // ── Social media ──────────────────────────────────────────────
+    defineField({
+      name: "instagramUrl",
+      title: "Instagram URL",
+      type: "string",
+      description: "Leave blank to hide the icon.",
+    }),
+    defineField({
+      name: "tiktokUrl",
+      title: "TikTok URL",
+      type: "string",
+      description: "Leave blank to hide the icon.",
+    }),
+    defineField({
+      name: "facebookUrl",
+      title: "Facebook URL",
+      type: "string",
+      description: "Leave blank to hide the icon.",
+    }),
+
     // ── Legal footer bar ──────────────────────────────────────────
     defineField({
       name: "copyrightText",

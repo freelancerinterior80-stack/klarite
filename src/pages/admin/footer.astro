@@ -32,6 +32,9 @@ if (Astro.request.method === "POST") {
         privacyUrl:    form.get("privacyUrl")    as string,
         termsUrl:      form.get("termsUrl")      as string,
         shippingUrl:   form.get("shippingUrl")   as string,
+        instagramUrl:  form.get("instagramUrl")  as string,
+        tiktokUrl:     form.get("tiktokUrl")     as string,
+        facebookUrl:   form.get("facebookUrl")   as string,
         // Localized fields
         'brandTagline[_key=="fr"].value':   form.get("brandTagline_fr")   as string,
         'brandTagline[_key=="en"].value':   form.get("brandTagline_en")   as string,
@@ -155,6 +158,35 @@ const doc = raw ?? {};
           </div>
         </div>
       ))}
+    </div>
+
+    <!-- ── Social media ─────────────────────────────────────────────── -->
+    <div class="rounded-[1.5rem] border border-charcoal/10 bg-white/70 p-7 shadow-[0_8px_30px_rgba(31,37,34,0.06)]">
+      <h2 class="mb-1 text-xs font-medium uppercase tracking-wider text-charcoal/50">Social Media</h2>
+      <p class="mb-6 text-xs text-charcoal/40">Icons appear in the footer brand column. Leave blank to hide any platform.</p>
+      <div class="grid gap-5 sm:grid-cols-3">
+        <div class="admin-field">
+          <label class="flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+            Instagram URL
+          </label>
+          <input name="instagramUrl" class="admin-input font-mono text-sm" value={doc.instagramUrl ?? ""} placeholder="https://instagram.com/klarite" />
+        </div>
+        <div class="admin-field">
+          <label class="flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.27 8.27 0 0 0 4.84 1.54V6.78a4.85 4.85 0 0 1-1.07-.09z"/></svg>
+            TikTok URL
+          </label>
+          <input name="tiktokUrl" class="admin-input font-mono text-sm" value={doc.tiktokUrl ?? ""} placeholder="https://tiktok.com/@klarite" />
+        </div>
+        <div class="admin-field">
+          <label class="flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+            Facebook URL
+          </label>
+          <input name="facebookUrl" class="admin-input font-mono text-sm" value={doc.facebookUrl ?? ""} placeholder="https://facebook.com/klarite" />
+        </div>
+      </div>
     </div>
 
     <!-- ── Legal bar ─────────────────────────────────────────────────── -->
