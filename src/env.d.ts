@@ -19,5 +19,6 @@ interface ImportMeta {
 declare namespace App {
   interface Locals {
     locale: import("./i18n/config").Locale;
+    adminRole?: "admin" | "staff";
   }
 }

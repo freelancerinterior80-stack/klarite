@@ -15,12 +15,19 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const url = new URL(context.request.url);
   const pathname = url.pathname;
 
-  // 1. Admin routes — guard all except the login page, then pass through
+  // 1. Admin routes — guard all except the login page
   if (pathname.startsWith("/admin")) {
     if (pathname !== "/admin" && pathname !== "/admin/") {
       const token = context.cookies.get(SESSION_COOKIE)?.value ?? "";
       const user = verifySession(token, import.meta.env.ADMIN_SESSION_SECRET ?? "");
       if (!user) return context.redirect("/admin");
+
+      const isStaff = user.startsWith("staff:");
+      // Staff may only access /admin/inquiries and /admin/logout
+      if (isStaff && !pathname.startsWith("/admin/inquiries") && pathname !== "/admin/logout") {
+        return context.redirect("/admin/inquiries");
+      }
+      context.locals.adminRole = isStaff ? "staff" : "admin";
     }
     return next();
   }

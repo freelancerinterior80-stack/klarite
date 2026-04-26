@@ -4,18 +4,34 @@ import AdminLayout from "@/layouts/AdminLayout.astro";
 import { writeClient } from "@/sanity/write-client";
 
 const counts = await writeClient.fetch(`{
-  "products":     count(*[_type == "product"]),
-  "testimonials": count(*[_type == "testimonial"]),
-  "concerns":     count(*[_type == "concern"]),
-  "ritualSteps":  count(*[_type == "ritualStep"]),
-  "trustPoints":  count(*[_type == "trustPoint"]),
-  "campaigns":    count(*[_type == "campaign"])
+  "products":        count(*[_type == "product"]),
+  "testimonials":    count(*[_type == "testimonial"]),
+  "concerns":        count(*[_type == "concern"]),
+  "ritualSteps":     count(*[_type == "ritualStep"]),
+  "trustPoints":     count(*[_type == "trustPoint"]),
+  "campaigns":       count(*[_type == "campaign"]),
+  "inquiries":       count(*[_type == "inquiry"]),
+  "unreadInquiries": count(*[_type == "inquiry" && isRead == false])
 }`);
 
 const sections = [
   {
+    label: "Inquiries",
+    count: counts.inquiries,
+    unread: counts.unreadInquiries,
+    href: "/admin/inquiries",
+    newHref: null,
+    desc: "Customer product enquiries submitted via the site",
+    color: "from-orange-50 to-amber-50",
+    border: "border-orange-200/60",
+    iconBg: "bg-orange-100",
+    iconColor: "text-orange-700",
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>`,
+  },
+  {
     label: "Campaigns",
     count: counts.campaigns,
+    unread: null,
     href: "/admin/campaigns",
     newHref: "/admin/campaigns/new",
     desc: "Promotional sliders that replace the hero section",
@@ -160,19 +176,26 @@ const extraCards = [
 
   <!-- Stats grid -->
   <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-    {sections.map(({ label, count, href, newHref, desc, color, border, iconBg, iconColor, icon }) => (
+    {sections.map(({ label, count, unread, href, newHref, desc, color, border, iconBg, iconColor, icon }: any) => (
       <div class:list={["group relative rounded-[1.5rem] border bg-gradient-to-br p-6 shadow-sm transition-all hover:shadow-md", color, border]}>
         <div class="flex items-start justify-between mb-5">
           <div class:list={["flex h-11 w-11 items-center justify-center rounded-xl", iconBg, iconColor]} set:html={icon} />
-          <span class="font-display text-4xl text-charcoal/80">{count}</span>
+          <div class="text-right">
+            <span class="font-display text-4xl text-charcoal/80">{count}</span>
+            {unread != null && unread > 0 && (
+              <p class="mt-0.5 text-[0.65rem] font-medium text-orange-600">{unread} unread</p>
+            )}
+          </div>
         </div>
         <p class="font-semibold text-charcoal">{label}</p>
         <p class="mt-0.5 text-xs text-charcoal/50">{desc}</p>
         <div class="mt-5 flex items-center gap-2">
           <a href={href} class="flex-1 rounded-xl border border-charcoal/15 bg-white/70 px-4 py-2 text-center text-xs font-medium text-charcoal transition hover:bg-white">Manage</a>
-          <a href={newHref} class="flex h-9 w-9 items-center justify-center rounded-xl bg-charcoal text-cream transition hover:bg-charcoal/80" title={`New ${label.slice(0, -1)}`}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          </a>
+          {newHref && (
+            <a href={newHref} class="flex h-9 w-9 items-center justify-center rounded-xl bg-charcoal text-cream transition hover:bg-charcoal/80" title={`New ${label.slice(0, -1)}`}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </a>
+          )}
         </div>
       </div>
     ))}

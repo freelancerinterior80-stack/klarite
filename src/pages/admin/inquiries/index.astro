@@ -1,0 +1,171 @@
+---
+export const prerender = false;
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { writeClient } from "@/sanity/write-client";
+
+const params = Astro.url.searchParams;
+const statusFilter = params.get("status") ?? "all";
+const productFilter = params.get("product") ?? "";
+const fromDate = params.get("from") ?? "";
+const toDate   = params.get("to")   ?? "";
+
+// Build GROQ filter
+const filters: string[] = [`_type == "inquiry"`];
+if (statusFilter === "unread") filters.push(`isRead == false`);
+if (statusFilter === "read")   filters.push(`isRead == true`);
+if (productFilter)             filters.push(`productSlug == "${productFilter.replace(/"/g, "")}"`);
+if (fromDate)                  filters.push(`_createdAt >= "${fromDate}T00:00:00Z"`);
+if (toDate)                    filters.push(`_createdAt <= "${toDate}T23:59:59Z"`);
+
+const groqFilter = filters.join(" && ");
+
+const [inquiries, productOptions] = await Promise.all([
+  writeClient.fetch<Array<{
+    _id: string;
+    _createdAt: string;
+    productName: string;
+    productSlug: string;
+    customerName: string;
+    phone: string;
+    email: string;
+    isRead: boolean;
+  }>>(`*[${groqFilter}] | order(_createdAt desc) { _id, _createdAt, productName, productSlug, customerName, phone, email, isRead }`),
+  writeClient.fetch<Array<{ slug: string; name: string }>>(
+    `*[_type == "inquiry" && defined(productSlug)] | order(productName asc) { "slug": productSlug, "name": productName } | unique`
+  ).then((rows) => {
+    const seen = new Set<string>();
+    return rows.filter((r) => r.slug && !seen.has(r.slug) && seen.add(r.slug));
+  }),
+]);
+
+const unreadCount = inquiries.filter((i) => !i.isRead).length;
+const totalCount  = inquiries.length;
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+}
+function formatTime(iso: string) {
+  return new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+}
+---
+
+<AdminLayout title="Inquiries">
+  <!-- Summary -->
+  <div class="mb-5 flex items-center justify-between">
+    <div>
+      <h2 class="text-lg font-semibold text-charcoal">Customer Inquiries</h2>
+      <p class="mt-0.5 text-xs text-charcoal/45">
+        {totalCount} {totalCount === 1 ? "inquiry" : "inquiries"}
+        {unreadCount > 0 && <span class="ml-2 rounded-full bg-gold/20 px-2 py-0.5 text-[0.65rem] font-medium text-gold">{unreadCount} unread</span>}
+      </p>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <form method="GET" class="mb-6 flex flex-wrap items-end gap-3 rounded-[1.2rem] border border-charcoal/8 bg-white/60 px-5 py-4">
+    <!-- Status pills -->
+    <div class="flex gap-1.5">
+      {[
+        { value: "all",    label: "All" },
+        { value: "unread", label: "Unread" },
+        { value: "read",   label: "Read" },
+      ].map(({ value, label }) => (
+        <button
+          type="submit"
+          name="status"
+          value={value}
+          class:list={[
+            "rounded-xl px-4 py-2 text-xs font-medium transition",
+            statusFilter === value
+              ? "bg-charcoal text-cream"
+              : "border border-charcoal/15 text-charcoal hover:bg-charcoal/5",
+          ]}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+
+    <!-- Product filter -->
+    {productOptions.length > 0 && (
+      <select name="product" class="admin-input w-auto text-xs" onchange="this.form.submit()">
+        <option value="">All products</option>
+        {productOptions.map((p) => (
+          <option value={p.slug} selected={productFilter === p.slug}>{p.name}</option>
+        ))}
+      </select>
+    )}
+
+    <!-- Date range -->
+    <div class="flex items-center gap-2">
+      <input type="date" name="from" value={fromDate} class="admin-input w-auto text-xs" />
+      <span class="text-xs text-charcoal/40">→</span>
+      <input type="date" name="to" value={toDate} class="admin-input w-auto text-xs" />
+      <button type="submit" class="rounded-xl bg-charcoal px-4 py-2 text-xs font-medium text-cream transition hover:bg-charcoal/80">Filter</button>
+    </div>
+
+    {(statusFilter !== "all" || productFilter || fromDate || toDate) && (
+      <a href="/admin/inquiries" class="text-xs text-charcoal/40 transition hover:text-charcoal">Clear filters</a>
+    )}
+  </form>
+
+  <!-- Inquiry list -->
+  {inquiries.length === 0 ? (
+    <div class="rounded-[1.5rem] border border-charcoal/8 bg-white/60 px-8 py-12 text-center">
+      <p class="text-sm text-charcoal/40">No inquiries match the current filters.</p>
+    </div>
+  ) : (
+    <div class="space-y-2">
+      {inquiries.map((inq) => (
+        <a
+          href={`/admin/inquiries/${inq._id}`}
+          class:list={[
+            "flex items-center gap-4 rounded-[1.2rem] border px-5 py-4 transition hover:shadow-md",
+            !inq.isRead
+              ? "border-gold/40 bg-gold/8 border-l-[3px] border-l-gold"
+              : "border-charcoal/8 bg-white/70",
+          ]}
+        >
+          <!-- Unread dot -->
+          <div class="shrink-0">
+            {!inq.isRead
+              ? <div class="h-2.5 w-2.5 rounded-full bg-gold"></div>
+              : <div class="h-2.5 w-2.5 rounded-full bg-charcoal/15"></div>
+            }
+          </div>
+
+          <!-- Date -->
+          <div class="w-28 shrink-0">
+            <p class="text-xs font-medium text-charcoal">{formatDate(inq._createdAt)}</p>
+            <p class="text-[0.68rem] text-charcoal/40">{formatTime(inq._createdAt)}</p>
+          </div>
+
+          <!-- Product -->
+          <div class="w-36 shrink-0 hidden sm:block">
+            <p class="truncate text-xs text-charcoal/60">{inq.productName || "—"}</p>
+          </div>
+
+          <!-- Customer -->
+          <div class="flex-1 min-w-0">
+            <p class:list={["truncate text-sm", !inq.isRead ? "font-semibold text-charcoal" : "font-medium text-charcoal"]}>
+              {inq.customerName || "Anonymous"}
+            </p>
+            <p class="truncate text-xs text-charcoal/45">{inq.phone || inq.email || "No contact"}</p>
+          </div>
+
+          <!-- Status badge -->
+          <span class:list={[
+            "shrink-0 rounded-full px-2.5 py-1 text-[0.62rem] font-medium uppercase tracking-wider border hidden lg:inline",
+            !inq.isRead
+              ? "bg-gold/15 text-gold border-gold/30"
+              : "bg-charcoal/6 text-charcoal/40 border-charcoal/10",
+          ]}>
+            {!inq.isRead ? "New" : "Read"}
+          </span>
+
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-charcoal/25"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+      ))}
+    </div>
+  )}
+</AdminLayout>

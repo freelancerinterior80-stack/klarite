@@ -1,13 +1,17 @@
 ---
 export const prerender = false;
 
-import { signSession, verifySession, SESSION_COOKIE } from "@/lib/admin-auth";
+import { signSession, verifySession, verifyPassword, SESSION_COOKIE } from "@/lib/admin-auth";
+import { writeClient } from "@/sanity/write-client";
 import "@/styles/global.css";
 
-// Already logged in → go to dashboard
+const secret = import.meta.env.ADMIN_SESSION_SECRET ?? "";
+
+// Already logged in → go to appropriate page based on role
 const token = Astro.cookies.get(SESSION_COOKIE)?.value ?? "";
-if (verifySession(token, import.meta.env.ADMIN_SESSION_SECRET ?? "")) {
-  return Astro.redirect("/admin/dashboard");
+const existingUser = verifySession(token, secret);
+if (existingUser) {
+  return Astro.redirect(existingUser.startsWith("staff:") ? "/admin/inquiries" : "/admin/dashboard");
 }
 
 let error = "";
@@ -17,19 +21,28 @@ if (Astro.request.method === "POST") {
   const username = (form.get("username") as string ?? "").trim();
   const password = form.get("password") as string ?? "";
 
-  if (
-    username === import.meta.env.ADMIN_USERNAME &&
-    password === import.meta.env.ADMIN_PASSWORD
-  ) {
-    const sessionToken = signSession(username, import.meta.env.ADMIN_SESSION_SECRET);
-    Astro.cookies.set(SESSION_COOKIE, sessionToken, {
-      httpOnly: true,
-      secure: import.meta.env.PROD,
-      maxAge: 60 * 60 * 24 * 7,
-      path: "/",
-      sameSite: "strict",
-    });
+  const cookieOpts = {
+    httpOnly: true,
+    secure: import.meta.env.PROD,
+    maxAge: 60 * 60 * 24 * 7,
+    path: "/",
+    sameSite: "strict" as const,
+  };
+
+  // Check admin credentials first
+  if (username === import.meta.env.ADMIN_USERNAME && password === import.meta.env.ADMIN_PASSWORD) {
+    Astro.cookies.set(SESSION_COOKIE, signSession("admin:" + username, secret), cookieOpts);
     return Astro.redirect("/admin/dashboard");
+  }
+
+  // Check staff accounts in Sanity
+  const staff = await writeClient.fetch<{ username: string; passwordHash: string } | null>(
+    `*[_type == "staffAccount" && username == $u && isActive == true][0]{ username, passwordHash }`,
+    { u: username }
+  );
+  if (staff && staff.passwordHash && await verifyPassword(password, staff.passwordHash)) {
+    Astro.cookies.set(SESSION_COOKIE, signSession("staff:" + staff.username, secret), cookieOpts);
+    return Astro.redirect("/admin/inquiries");
   }
 
   error = "Invalid username or password.";

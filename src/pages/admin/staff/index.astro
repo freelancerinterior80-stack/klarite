@@ -1,0 +1,63 @@
+---
+export const prerender = false;
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { writeClient } from "@/sanity/write-client";
+
+const staff = await writeClient.fetch<Array<{
+  _id: string; displayName: string; username: string; isActive: boolean;
+}>>(
+  `*[_type == "staffAccount"] | order(_createdAt desc) { _id, displayName, username, isActive }`
+);
+
+const saved = Astro.url.searchParams.get("saved");
+---
+
+<AdminLayout title="Staff">
+  {saved && (
+    <div class="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm text-emerald-700">
+      Staff account saved successfully.
+    </div>
+  )}
+
+  <div class="mb-6 flex items-center justify-between">
+    <div>
+      <h2 class="text-lg font-semibold text-charcoal">Staff Accounts</h2>
+      <p class="mt-0.5 text-xs text-charcoal/45">Staff can view customer inquiries. They cannot access other admin sections.</p>
+    </div>
+    <a href="/admin/staff/new" class="rounded-xl bg-charcoal px-5 py-2.5 text-sm font-medium text-cream transition hover:bg-charcoal/80">
+      + New Staff
+    </a>
+  </div>
+
+  {staff.length === 0 ? (
+    <div class="rounded-[1.5rem] border border-charcoal/8 bg-white/60 px-8 py-12 text-center">
+      <p class="text-sm text-charcoal/40">No staff accounts yet. Create one to give team members access to inquiries.</p>
+      <a href="/admin/staff/new" class="mt-4 inline-block rounded-xl bg-charcoal px-6 py-2.5 text-sm font-medium text-cream transition hover:bg-charcoal/80">Create first staff account</a>
+    </div>
+  ) : (
+    <div class="space-y-3">
+      {staff.map((s) => (
+        <div class="flex items-center gap-4 rounded-[1.2rem] border border-charcoal/8 bg-white/70 px-6 py-4 shadow-sm">
+          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-charcoal/8 text-sm font-medium text-charcoal/60">
+            {(s.displayName || "?")[0].toUpperCase()}
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium text-charcoal">{s.displayName}</p>
+            <p class="text-xs text-charcoal/45">@{s.username}</p>
+          </div>
+          <span class:list={[
+            "shrink-0 rounded-full px-3 py-1 text-[0.68rem] font-medium uppercase tracking-wider border",
+            s.isActive
+              ? "bg-emerald-100 text-emerald-700 border-emerald-200"
+              : "bg-charcoal/8 text-charcoal/45 border-charcoal/10",
+          ]}>
+            {s.isActive ? "Active" : "Inactive"}
+          </span>
+          <a href={`/admin/staff/${s._id}`} class="shrink-0 rounded-xl border border-charcoal/12 bg-white px-4 py-2 text-xs font-medium text-charcoal transition hover:bg-charcoal/5">
+            Edit →
+          </a>
+        </div>
+      ))}
+    </div>
+  )}
+</AdminLayout>

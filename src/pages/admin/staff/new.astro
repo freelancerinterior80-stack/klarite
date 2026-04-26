@@ -1,0 +1,78 @@
+---
+export const prerender = false;
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { writeClient } from "@/sanity/write-client";
+import { hashPassword } from "@/lib/admin-auth";
+
+let error = "";
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  const displayName = (form.get("displayName") as string ?? "").trim();
+  const username    = (form.get("username")    as string ?? "").trim().toLowerCase();
+  const password    = (form.get("password")    as string ?? "");
+
+  if (!displayName || !username || !password) {
+    error = "All fields are required.";
+  } else if (password.length < 8) {
+    error = "Password must be at least 8 characters.";
+  } else {
+    // Check username is unique
+    const existing = await writeClient.fetch(
+      `count(*[_type == "staffAccount" && username == $u])`,
+      { u: username }
+    );
+    if (existing > 0) {
+      error = "Username already taken. Choose a different one.";
+    } else {
+      try {
+        const passwordHash = await hashPassword(password);
+        await writeClient.create({ _type: "staffAccount", displayName, username, passwordHash, isActive: true });
+        return Astro.redirect("/admin/staff?saved=1");
+      } catch {
+        error = "Failed to create account. Please try again.";
+      }
+    }
+  }
+}
+---
+
+<AdminLayout title="New Staff Account">
+  <div class="mb-6">
+    <a href="/admin/staff" class="text-xs text-charcoal/45 transition hover:text-charcoal">← Back to Staff</a>
+  </div>
+
+  <div class="max-w-lg">
+    <div class="rounded-[1.5rem] border border-charcoal/10 bg-white/70 p-8 shadow-sm">
+      <h2 class="mb-1 text-base font-semibold text-charcoal">Create Staff Account</h2>
+      <p class="mb-6 text-xs text-charcoal/45">Staff can log in at /admin and view customer inquiries only.</p>
+
+      {error && (
+        <p class="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>
+      )}
+
+      <form method="POST" class="space-y-5">
+        <div class="admin-field">
+          <label>Full Name</label>
+          <input type="text" name="displayName" required placeholder="e.g. Sara Ben Ali" class="admin-input" />
+        </div>
+        <div class="admin-field">
+          <label>Username</label>
+          <input type="text" name="username" required placeholder="e.g. sara.benali" class="admin-input" autocomplete="off" />
+        </div>
+        <div class="admin-field">
+          <label>Password (min 8 characters)</label>
+          <input type="password" name="password" required minlength="8" class="admin-input" autocomplete="new-password" />
+        </div>
+        <div class="flex gap-3">
+          <button type="submit" class="rounded-xl bg-charcoal px-6 py-2.5 text-sm font-medium text-cream transition hover:bg-charcoal/80">
+            Create Account
+          </button>
+          <a href="/admin/staff" class="rounded-xl border border-charcoal/15 px-6 py-2.5 text-sm font-medium text-charcoal transition hover:bg-charcoal/5">
+            Cancel
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</AdminLayout>
