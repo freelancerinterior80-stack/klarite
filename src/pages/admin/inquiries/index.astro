@@ -31,7 +31,7 @@ const [inquiries, productOptions] = await Promise.all([
     isRead: boolean;
   }>>(`*[${groqFilter}] | order(_createdAt desc) { _id, _createdAt, productName, productSlug, customerName, phone, email, isRead }`),
   writeClient.fetch<Array<{ slug: string; name: string }>>(
-    `*[_type == "inquiry" && defined(productSlug)] | order(productName asc) { "slug": productSlug, "name": productName } | unique`
+    `*[_type == "inquiry" && defined(productSlug)] | order(productName asc) { "slug": productSlug, "name": productName }`
   ).then((rows) => {
     const seen = new Set<string>();
     return rows.filter((r) => r.slug && !seen.has(r.slug) && seen.add(r.slug));
