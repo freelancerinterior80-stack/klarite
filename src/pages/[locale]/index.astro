@@ -847,7 +847,7 @@ const benefits = [
           <p id="enquire-error" class="hidden text-sm text-red-600"></p>
 
           <button type="submit" id="enquire-submit" class="cta-primary w-full justify-center">
-            Send Enquiry
+            Place Order
           </button>
         </form>
       </div>
@@ -972,7 +972,7 @@ const benefits = [
             if (errorEl) { errorEl.textContent = "Network error. Please try again."; errorEl.classList.remove("hidden"); }
           })
           .finally(function () {
-            if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Send Enquiry"; }
+            if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Place Order"; }
           });
       });
     }
