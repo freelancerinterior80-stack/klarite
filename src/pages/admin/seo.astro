@@ -25,7 +25,6 @@ if (Astro.request.method === "POST") {
           canonicalUrl: form.get("canonicalUrl") as string,
           twitterHandle: form.get("twitterHandle") as string,
           googleAnalyticsId: form.get("googleAnalyticsId") as string,
-          whatsappButtonColor: form.get("whatsappButtonColor") as string,
           'homepageTitle[_key=="fr"].value': form.get("title_fr") as string,
           'homepageTitle[_key=="en"].value': form.get("title_en") as string,
           'homepageTitle[_key=="ar"].value': form.get("title_ar") as string,
@@ -179,41 +178,6 @@ const realOgUrl = ogImageUrl ?? (doc?.ogImage ? await writeClient.fetch(
           <input name="twitterHandle" class="admin-input" value={doc.twitterHandle ?? ""} placeholder="@klarite" />
         </div>
       </div>
-    </div>
-
-    <!-- Brand Colors -->
-    <div class="rounded-[1.5rem] border border-charcoal/10 bg-white/70 p-7 shadow-[0_8px_30px_rgba(31,37,34,0.06)]">
-      <h2 class="mb-1 text-xs font-medium uppercase tracking-wider text-charcoal/50">Brand Colors</h2>
-      <p class="mb-5 text-xs text-charcoal/40">Customize button colors sitewide. Changes apply immediately without rebuilding.</p>
-      <div class="flex items-center gap-4 max-w-sm">
-        <div class="admin-field flex-1">
-          <label>WhatsApp Button Color</label>
-          <input
-            name="whatsappButtonColor"
-            class="admin-input font-mono"
-            value={doc.whatsappButtonColor ?? "#25D366"}
-            placeholder="#25D366"
-          />
-        </div>
-        <div class="mt-5 shrink-0">
-          <input
-            type="color"
-            id="waColorPicker"
-            value={doc.whatsappButtonColor ?? "#25D366"}
-            class="h-10 w-10 cursor-pointer rounded-lg border border-charcoal/15 p-0.5"
-          />
-        </div>
-      </div>
-      <script is:inline>
-        var picker = document.getElementById('waColorPicker');
-        var input  = document.querySelector('[name="whatsappButtonColor"]');
-        if (picker && input) {
-          picker.addEventListener('input', function() { input.value = picker.value; });
-          input.addEventListener('input', function() {
-            if (/^#[0-9a-fA-F]{6}$/.test(input.value)) picker.value = input.value;
-          });
-        }
-      </script>
     </div>
 
     <!-- Analytics -->
