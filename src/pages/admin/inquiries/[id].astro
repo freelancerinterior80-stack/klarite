@@ -22,11 +22,13 @@ const inq = await writeClient.fetch<{
   customerName: string;
   phone: string;
   email: string;
+  city: string;
+  address: string;
   message: string;
   locale: string;
   isRead: boolean;
 } | null>(
-  `*[_id == $id][0]{ _id, _createdAt, productName, productSlug, customerName, phone, email, message, locale, isRead }`,
+  `*[_id == $id][0]{ _id, _createdAt, productName, productSlug, customerName, phone, email, city, address, message, locale, isRead }`,
   { id }
 );
 
@@ -98,6 +100,18 @@ function formatDateTime(iso: string) {
             <div class="rounded-xl border border-charcoal/8 bg-charcoal/[0.02] px-4 py-3">
               <p class="mb-0.5 text-[0.65rem] font-medium uppercase tracking-wider text-charcoal/40">Email</p>
               <a href={`mailto:${inq.email}`} class="text-sm font-medium text-charcoal transition hover:text-gold">{inq.email}</a>
+            </div>
+          )}
+          {inq.city && (
+            <div class="rounded-xl border border-charcoal/8 bg-charcoal/[0.02] px-4 py-3">
+              <p class="mb-0.5 text-[0.65rem] font-medium uppercase tracking-wider text-charcoal/40">City</p>
+              <p class="text-sm font-medium text-charcoal">{inq.city}</p>
+            </div>
+          )}
+          {inq.address && (
+            <div class="rounded-xl border border-charcoal/8 bg-charcoal/[0.02] px-4 py-3 sm:col-span-2">
+              <p class="mb-0.5 text-[0.65rem] font-medium uppercase tracking-wider text-charcoal/40">Address</p>
+              <p class="text-sm font-medium text-charcoal">{inq.address}</p>
             </div>
           )}
         </div>

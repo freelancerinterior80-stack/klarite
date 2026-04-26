@@ -13,6 +13,8 @@ export const POST: APIRoute = async ({ request }) => {
       customerName: (form.get("name")        as string) || "",
       phone:        (form.get("phone")       as string) || "",
       email:        (form.get("email")       as string) || "",
+      city:         (form.get("city")        as string) || "",
+      address:      (form.get("address")     as string) || "",
       message:      (form.get("message")     as string) || "",
       locale:       (form.get("locale")      as string) || "fr",
       isRead:       false,

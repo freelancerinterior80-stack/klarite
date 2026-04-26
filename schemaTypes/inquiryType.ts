@@ -12,6 +12,8 @@ export const inquiryType = defineType({
     defineField({ name: "customerName",title: "Customer Name", type: "string" }),
     defineField({ name: "phone",       title: "Phone",         type: "string" }),
     defineField({ name: "email",       title: "Email",         type: "string" }),
+    defineField({ name: "city",        title: "City",          type: "string" }),
+    defineField({ name: "address",     title: "Address",       type: "string" }),
     defineField({ name: "message",     title: "Message",       type: "text" }),
     defineField({ name: "locale",      title: "Language",      type: "string" }),
     defineField({
