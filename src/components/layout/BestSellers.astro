@@ -6,9 +6,10 @@ import type { Locale } from "@/i18n/config";
 
 interface Props {
   products: any[];
+  orderBtnLabel?: string;
 }
 
-const { products } = Astro.props;
+const { products, orderBtnLabel = "Order Now" } = Astro.props;
 const locale = (Astro.currentLocale ?? "fr") as Locale;
 const t = getTranslations(locale);
 ---
@@ -28,7 +29,7 @@ const t = getTranslations(locale);
     data-drag-scroll
   >
     <div class="flex snap-x snap-mandatory gap-5 px-4 sm:px-6 lg:px-10" style="width: max-content;">
-      {products.map((product) => <ProductCard product={product} />)}
+      {products.map((product) => <ProductCard product={product} orderBtnLabel={orderBtnLabel} />)}
       <!-- Trailing spacer so last card isn't flush against edge -->
       <div class="w-4 shrink-0 lg:w-8" aria-hidden="true"></div>
     </div>

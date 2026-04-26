@@ -1,0 +1,169 @@
+---
+export const prerender = false;
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { writeClient } from "@/sanity/write-client";
+
+let error = "";
+let successMsg = "";
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  try {
+    await writeClient.createIfNotExists({
+      _id: "brandSettings",
+      _type: "brandSettings",
+      orderBtnLabel: "Order Now",
+      orderBtnBg: "#1c1c1c",
+      orderBtnText: "#f6f3ee",
+    });
+    await writeClient.patch("brandSettings").set({
+      orderBtnLabel: (form.get("orderBtnLabel") as string) || "Order Now",
+      orderBtnBg:    (form.get("orderBtnBg")    as string) || "#1c1c1c",
+      orderBtnText:  (form.get("orderBtnText")  as string) || "#f6f3ee",
+    }).commit();
+    successMsg = "Brand settings saved.";
+  } catch (e) {
+    error = "Failed to save. Please try again.";
+  }
+}
+
+const data = await writeClient.fetch<{
+  orderBtnLabel?: string;
+  orderBtnBg?: string;
+  orderBtnText?: string;
+} | null>(`*[_id == "brandSettings"][0]{ orderBtnLabel, orderBtnBg, orderBtnText }`);
+
+const label   = data?.orderBtnLabel ?? "Order Now";
+const btnBg   = data?.orderBtnBg   ?? "#1c1c1c";
+const btnText = data?.orderBtnText ?? "#f6f3ee";
+---
+
+<AdminLayout title="Brand Settings">
+
+  {successMsg && (
+    <div class="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm text-emerald-700">{successMsg}</div>
+  )}
+  {error && (
+    <div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm text-red-700">{error}</div>
+  )}
+
+  <form method="POST" class="max-w-xl space-y-6">
+
+    <!-- Order Button -->
+    <div class="rounded-[1.5rem] border border-charcoal/8 bg-white/70 p-7 shadow-sm">
+      <h2 class="mb-6 text-base font-semibold text-charcoal">Order Button</h2>
+
+      <div class="space-y-5">
+
+        <!-- Label -->
+        <div class="admin-field">
+          <label for="orderBtnLabel">Button Label</label>
+          <input
+            id="orderBtnLabel"
+            name="orderBtnLabel"
+            type="text"
+            value={label}
+            class="admin-input"
+            placeholder="Order Now"
+          />
+          <p class="mt-1.5 text-[0.7rem] text-charcoal/40">Text shown on product order buttons across the entire site.</p>
+        </div>
+
+        <!-- Colors -->
+        <div class="grid gap-5 sm:grid-cols-2">
+
+          <div class="admin-field">
+            <label for="orderBtnBg">Background Color</label>
+            <div class="flex items-center gap-3">
+              <input
+                id="orderBtnBg"
+                name="orderBtnBg"
+                type="color"
+                value={btnBg}
+                class="h-10 w-16 cursor-pointer rounded-lg border border-charcoal/15 bg-white p-1"
+              />
+              <input
+                type="text"
+                id="orderBtnBgText"
+                value={btnBg}
+                class="admin-input flex-1"
+                placeholder="#1c1c1c"
+                oninput="document.getElementById('orderBtnBg').value = this.value"
+              />
+            </div>
+          </div>
+
+          <div class="admin-field">
+            <label for="orderBtnText">Text Color</label>
+            <div class="flex items-center gap-3">
+              <input
+                id="orderBtnText"
+                name="orderBtnText"
+                type="color"
+                value={btnText}
+                class="h-10 w-16 cursor-pointer rounded-lg border border-charcoal/15 bg-white p-1"
+              />
+              <input
+                type="text"
+                id="orderBtnTextText"
+                value={btnText}
+                class="admin-input flex-1"
+                placeholder="#f6f3ee"
+                oninput="document.getElementById('orderBtnText').value = this.value"
+              />
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Live preview -->
+        <div class="admin-field">
+          <label>Preview</label>
+          <div class="flex items-center gap-4 pt-1">
+            <button
+              type="button"
+              id="btn-preview"
+              style={`background:${btnBg};color:${btnText};`}
+              class="rounded-full px-7 py-3 text-[0.72rem] font-medium uppercase tracking-[0.28em] transition"
+            >
+              {label}
+            </button>
+            <p class="text-[0.7rem] text-charcoal/40">Updates live as you type.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <button
+      type="submit"
+      class="rounded-xl bg-charcoal px-7 py-3 text-sm font-medium text-cream transition hover:bg-charcoal/80"
+    >
+      Save Settings
+    </button>
+
+  </form>
+
+</AdminLayout>
+
+<script>
+  const bgPicker   = document.getElementById("orderBtnBg")   as HTMLInputElement;
+  const textPicker = document.getElementById("orderBtnText") as HTMLInputElement;
+  const bgText     = document.getElementById("orderBtnBgText")   as HTMLInputElement;
+  const textText   = document.getElementById("orderBtnTextText")  as HTMLInputElement;
+  const labelInput = document.querySelector<HTMLInputElement>("#orderBtnLabel");
+  const preview    = document.getElementById("btn-preview") as HTMLElement;
+
+  function updatePreview() {
+    if (!preview) return;
+    preview.style.background = bgPicker?.value ?? "#1c1c1c";
+    preview.style.color      = textPicker?.value ?? "#f6f3ee";
+    preview.textContent      = labelInput?.value || "Order Now";
+  }
+
+  bgPicker?.addEventListener("input",   () => { bgText.value   = bgPicker.value;   updatePreview(); });
+  textPicker?.addEventListener("input", () => { textText.value = textPicker.value; updatePreview(); });
+  bgText?.addEventListener("input",     () => { bgPicker.value   = bgText.value;   updatePreview(); });
+  textText?.addEventListener("input",   () => { textPicker.value = textText.value; updatePreview(); });
+  labelInput?.addEventListener("input", updatePreview);
+</script>

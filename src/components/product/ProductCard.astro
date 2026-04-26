@@ -3,9 +3,10 @@ import { urlFor } from "@/sanity/image";
 
 interface Props {
   product: any;
+  orderBtnLabel?: string;
 }
 
-const { product } = Astro.props;
+const { product, orderBtnLabel = "Order Now" } = Astro.props;
 
 const imgSrc = product.image?.asset
   ? urlFor(product.image).width(640).format("webp").url()
@@ -77,7 +78,7 @@ const galleryUrls: string[] = [
         data-product-slug={product.slug?.current ?? product.slug ?? ""}
         type="button"
       >
-        Enquire Now
+        {orderBtnLabel}
       </button>
     </div>
   </div>

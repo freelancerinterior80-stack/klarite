@@ -190,6 +190,15 @@ img {
   opacity: 0.92;
 }
 
+.enquire-btn {
+  background: var(--order-btn-bg, #1c1c1c) !important;
+  color: var(--order-btn-text, #f6f3ee) !important;
+}
+.enquire-btn:hover {
+  filter: brightness(0.88);
+  opacity: 1 !important;
+}
+
 .cta-secondary:hover {
   border-color: rgba(198, 169, 107, 0.3);
   background: rgba(255, 255, 255, 0.9);

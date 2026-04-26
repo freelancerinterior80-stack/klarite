@@ -47,13 +47,18 @@ const heroQuery = `*[_id == "heroSettings"][0]{
   headlineFontWeight,
 }`;
 
-const [products, testimonials, ritualSteps, seoData, heroData] = await Promise.all([
+const [products, testimonials, ritualSteps, seoData, heroData, brandSettings] = await Promise.all([
   client.fetch(productsQuery, { locale }),
   client.fetch(testimonialsQuery, { locale }),
   client.fetch(ritualStepsQuery, { locale }),
   client.fetch(seoQuery, { locale }),
   client.fetch(heroQuery, { locale }),
+  client.fetch(`*[_type == "brandSettings"][0]{ orderBtnLabel, orderBtnBg, orderBtnText }`),
 ]);
+
+const orderBtnLabel: string = brandSettings?.orderBtnLabel || "Order Now";
+const orderBtnBg: string    = brandSettings?.orderBtnBg    || "#1c1c1c";
+const orderBtnText: string  = brandSettings?.orderBtnText  || "#f6f3ee";
 
 // Resolve video URL: uploaded file takes priority over external URL
 const heroVideoSrc = heroData?.heroVideoFileUrl || heroData?.heroVideoUrl || null;
@@ -133,6 +138,8 @@ const benefits = [
     titleSuffix: seoData?.titleSuffix,
   }}
 >
+  <Fragment set:html={`<style>:root{--order-btn-bg:${orderBtnBg};--order-btn-text:${orderBtnText};}</style>`} />
+
   <!-- ══════════════════════════════════════════════════════════════
        CAMPAIGN BANNER — shown when a campaign is active
        ══════════════════════════════════════════════════════════════ -->
@@ -492,7 +499,7 @@ const benefits = [
                 data-product-slug={product.slug?.current ?? product.slug ?? ""}
                 type="button"
               >
-                Enquire Now
+                {orderBtnLabel}
               </button>
               </div>
             </article>
@@ -641,7 +648,7 @@ const benefits = [
                   data-product-slug={product.slug?.current ?? product.slug ?? ""}
                   type="button"
                 >
-                  Enquire Now
+                  {orderBtnLabel}
                 </button>
               </div>
             </article>
@@ -771,7 +778,7 @@ const benefits = [
 
   <!-- ── All Products carousel ─────────────────────────────────── -->
   {products.length > 0 && (
-    <BestSellers products={products} />
+    <BestSellers products={products} orderBtnLabel={orderBtnLabel} />
   )}
 
   <!-- ══ Enquire Modal ══════════════════════════════════════════════ -->
