@@ -9,11 +9,8 @@ import { client } from "@/sanity/client";
 import { urlFor } from "@/sanity/image";
 import { productsQuery, testimonialsQuery, ritualStepsQuery } from "@/sanity/queries";
 
-export function getStaticPaths() {
-  return LOCALES.map(locale => ({ params: { locale } }));
-}
-
 const { locale } = Astro.params as { locale: Locale };
+if (!LOCALES.includes(locale)) return Astro.redirect("/fr");
 const t = getTranslations(locale);
 
 const seoQuery = `*[_id == "seoSettings"][0]{
