@@ -9,8 +9,14 @@ export const productsQuery = `*[_type == "product"] | order(_createdAt asc) {
   price,
   accent,
   notes,
-  "image": image { asset->, "alt": alt },
-  "images": images[] { asset->, "alt": alt }
+  "image": select(
+    count(images) > 0 => images[0] { asset->, "alt": alt },
+    image { asset->, "alt": alt }
+  ),
+  "images": select(
+    count(images) > 0 => images[1:] { asset->, "alt": alt },
+    null
+  )
 }`;
 
 export const testimonialsQuery = `*[_type == "testimonial"] | order(order asc) {
