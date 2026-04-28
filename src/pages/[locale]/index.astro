@@ -183,15 +183,10 @@ const benefits = [
           <a href="#skin-quiz" class="cta-secondary">{hero.cta2}</a>
         </div>
 
-        <ul class="mt-14 grid gap-4 border-t border-charcoal/8 pt-8 text-[0.67rem] uppercase tracking-[0.34em] text-stone/70 sm:grid-cols-3">
-          <li>{hero.trust1}</li>
-          <li>{hero.trust2}</li>
-          <li>{hero.trust3}</li>
-        </ul>
       </div>
 
       <!-- RIGHT — hero visual -->
-      <div class="relative" style="min-height: clamp(36rem, 70vh, 56rem);" data-reveal>
+      <div class="relative" style="height: clamp(36rem, 70vh, 56rem);" data-reveal>
 
         <!-- Outer glow orbs (outside the glass) -->
         <div class="hero-glow pointer-events-none left-[4%] top-[8%] h-[18rem] w-[18rem] sm:h-[24rem] sm:w-[24rem] lg:h-[28rem] lg:w-[28rem]"></div>
@@ -224,7 +219,9 @@ const benefits = [
             <img
               src={hero.heroImageUrl
                 ? `${hero.heroImageUrl}?w=900&auto=format`
-                : (products[0]?.image?.asset ? urlFor(products[0].image).width(900).format("webp").url() : "")}
+                : (products[0]?.image?.asset
+                    ? urlFor(products[0].image).width(900).format("webp").url()
+                    : "/images/products/creme-visage-closed.jpeg")}
               width={900}
               alt="KLARITÉ hero product"
               class="relative z-10 w-auto max-w-full object-contain object-center drop-shadow-[0_44px_88px_rgba(28,28,28,0.24)]"
@@ -269,11 +266,6 @@ const benefits = [
           </div>
         </div>
 
-        <!-- Scroll indicator -->
-        <div class="absolute -bottom-8 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-2 lg:flex">
-          <div class="h-10 w-px bg-gradient-to-b from-charcoal/20 to-transparent"></div>
-          <p class="text-[0.6rem] uppercase tracking-[0.36em] text-charcoal/30">Scroll</p>
-        </div>
       </div>
 
     </div>
