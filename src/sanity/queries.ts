@@ -9,14 +9,8 @@ export const productsQuery = `*[_type == "product"] | order(_createdAt asc) {
   price,
   accent,
   notes,
-  "image": select(
-    count(images) > 0 => images[0] { asset->, "alt": alt },
-    image { asset->, "alt": alt }
-  ),
-  "images": select(
-    count(images) > 0 => images[1:] { asset->, "alt": alt },
-    null
-  )
+  "image": coalesce(images[0] { asset->, "alt": alt }, image { asset->, "alt": alt }),
+  "images": images[1..99] { asset->, "alt": alt }
 }`;
 
 export const testimonialsQuery = `*[_type == "testimonial"] | order(order asc) {
