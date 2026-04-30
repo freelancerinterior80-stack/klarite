@@ -1,0 +1,226 @@
+---
+export const prerender = false;
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { writeClient } from "@/sanity/write-client";
+
+const loc = (arr: any[] | null | undefined, key: string) =>
+  arr?.find((i: any) => i._key === key)?.value ?? "";
+
+let error = "";
+let successMsg = "";
+
+const DEFAULTS = {
+  eyebrow: "Benefits",
+  headline_fr: "Une formule propre racontée en trois résultats.",
+  headline_en: "A clean formula story told in three outcomes.",
+  headline_ar: "قصة تركيبة نظيفة في ثلاث نتائج.",
+  b1title_fr: "Clarté", b1title_en: "Clarity", b1title_ar: "النقاء",
+  b1copy_fr: "Un nettoyage doux et une hydratation intelligente affinent l'aspect de la texture pour une peau fraîche, composée et équilibrée.",
+  b1copy_en: "Gentle cleansing and intelligent hydration refine the look of texture so skin appears fresh, composed, and balanced.",
+  b1copy_ar: "التنظيف اللطيف والترطيب الذكي يصقلان ملمس البشرة لتبدو طازجة ومتوازنة.",
+  b2title_fr: "Douceur", b2title_en: "Softness", b2title_ar: "النعومة",
+  b2copy_fr: "Des crèmes soyeuses et des lotions légères laissent une finition souple qui se sent calme, réconfortante et précieuse.",
+  b2copy_en: "Silken creams and weightless lotions leave behind a supple finish that feels quiet, comforting, and expensive.",
+  b2copy_ar: "كريمات حريرية ولوشنات خفيفة تترك إحساساً ناعماً وفاخراً.",
+  b3title_fr: "Éclat", b3title_en: "Radiance", b3title_ar: "التألق",
+  b3copy_fr: "Chaque formule est conçue pour redonner de la lumière à la peau avec un éclat satiné plutôt qu'un brillant excessif.",
+  b3copy_en: "Each formula is designed to return light to the skin with a satin glow rather than a glossy, overworked shine.",
+  b3copy_ar: "كل تركيبة مصممة لإعادة الإضاءة للبشرة بلمعان حريري وليس براقاً مفرطاً.",
+};
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  const action = (form.get("_action") as string) ?? "save-text";
+
+  try {
+    await writeClient.createIfNotExists({ _id: "benefitsSection", _type: "benefitsSection" });
+
+    if (action === "save-text") {
+      await writeClient.patch("benefitsSection").set({
+        eyebrow: form.get("eyebrow") as string || DEFAULTS.eyebrow,
+        'headline[_key=="fr"].value':     form.get("headline_fr") as string,
+        'headline[_key=="en"].value':     form.get("headline_en") as string,
+        'headline[_key=="ar"].value':     form.get("headline_ar") as string,
+        'benefit1Title[_key=="fr"].value': form.get("b1title_fr") as string,
+        'benefit1Title[_key=="en"].value': form.get("b1title_en") as string,
+        'benefit1Title[_key=="ar"].value': form.get("b1title_ar") as string,
+        'benefit1Copy[_key=="fr"].value':  form.get("b1copy_fr") as string,
+        'benefit1Copy[_key=="en"].value':  form.get("b1copy_en") as string,
+        'benefit1Copy[_key=="ar"].value':  form.get("b1copy_ar") as string,
+        'benefit2Title[_key=="fr"].value': form.get("b2title_fr") as string,
+        'benefit2Title[_key=="en"].value': form.get("b2title_en") as string,
+        'benefit2Title[_key=="ar"].value': form.get("b2title_ar") as string,
+        'benefit2Copy[_key=="fr"].value':  form.get("b2copy_fr") as string,
+        'benefit2Copy[_key=="en"].value':  form.get("b2copy_en") as string,
+        'benefit2Copy[_key=="ar"].value':  form.get("b2copy_ar") as string,
+        'benefit3Title[_key=="fr"].value': form.get("b3title_fr") as string,
+        'benefit3Title[_key=="en"].value': form.get("b3title_en") as string,
+        'benefit3Title[_key=="ar"].value': form.get("b3title_ar") as string,
+        'benefit3Copy[_key=="fr"].value':  form.get("b3copy_fr") as string,
+        'benefit3Copy[_key=="en"].value':  form.get("b3copy_en") as string,
+        'benefit3Copy[_key=="ar"].value':  form.get("b3copy_ar") as string,
+      }).commit();
+      successMsg = "Content saved.";
+    }
+
+    if (action === "upload-image") {
+      const file = form.get("sectionImage") as File | null;
+      if (file && file.size > 0) {
+        const buffer = Buffer.from(await file.arrayBuffer());
+        const asset = await writeClient.assets.upload("image", buffer, {
+          filename: file.name,
+          contentType: file.type,
+        });
+        await writeClient.patch("benefitsSection").set({
+          sectionImage: { _type: "image", asset: { _type: "reference", _ref: asset._id } },
+        }).commit();
+        successMsg = "Image uploaded.";
+      } else {
+        error = "No image file selected.";
+      }
+    }
+
+    if (action === "remove-image") {
+      await writeClient.patch("benefitsSection").unset(["sectionImage"]).commit();
+      successMsg = "Image removed.";
+    }
+  } catch (e) {
+    error = "Save failed. Please try again.";
+  }
+}
+
+const raw = await writeClient.fetch(`*[_id == "benefitsSection"][0]`);
+const doc = raw ?? {};
+
+if (!raw) {
+  await writeClient.createIfNotExists({
+    _id: "benefitsSection", _type: "benefitsSection",
+    headline:     [{ _key: "fr", value: "" }, { _key: "en", value: "" }, { _key: "ar", value: "" }],
+    benefit1Title:[{ _key: "fr", value: "" }, { _key: "en", value: "" }, { _key: "ar", value: "" }],
+    benefit1Copy: [{ _key: "fr", value: "" }, { _key: "en", value: "" }, { _key: "ar", value: "" }],
+    benefit2Title:[{ _key: "fr", value: "" }, { _key: "en", value: "" }, { _key: "ar", value: "" }],
+    benefit2Copy: [{ _key: "fr", value: "" }, { _key: "en", value: "" }, { _key: "ar", value: "" }],
+    benefit3Title:[{ _key: "fr", value: "" }, { _key: "en", value: "" }, { _key: "ar", value: "" }],
+    benefit3Copy: [{ _key: "fr", value: "" }, { _key: "en", value: "" }, { _key: "ar", value: "" }],
+  });
+}
+
+const imgUrl = doc?.sectionImage?.asset
+  ? await writeClient.fetch(`*[_id == $id][0].url`, { id: doc.sectionImage.asset._ref }).catch(() => null)
+  : null;
+const realImgUrl = imgUrl ?? (doc?.sectionImage
+  ? await writeClient.fetch(`*[_id == "benefitsSection"][0].sectionImage.asset->url`).catch(() => null)
+  : null);
+---
+
+<AdminLayout title="Benefits Section">
+  <div class="mb-8">
+    <h1 class="font-display text-3xl text-charcoal">Benefits Section</h1>
+    <p class="mt-1 text-sm text-charcoal/55">Edit the image, headline and three benefit items (Clarity · Softness · Radiance).</p>
+  </div>
+
+  {error && <div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm text-red-700">{error}</div>}
+  {successMsg && <div class="mb-6 rounded-xl border border-green-200 bg-green-50 px-5 py-3 text-sm text-green-700">{successMsg}</div>}
+
+  <!-- ── Text content ──────────────────────────────────────────── -->
+  <form method="POST" class="space-y-8">
+    <input type="hidden" name="_action" value="save-text" />
+
+    <!-- Eyebrow -->
+    <div class="rounded-[1.5rem] border border-charcoal/10 bg-white/70 p-7 shadow-[0_8px_30px_rgba(31,37,34,0.06)]">
+      <h2 class="mb-5 text-xs font-medium uppercase tracking-wider text-charcoal/50">Section Eyebrow</h2>
+      <div class="admin-field max-w-xs">
+        <label>Eyebrow Label</label>
+        <input name="eyebrow" class="admin-input" value={doc.eyebrow ?? DEFAULTS.eyebrow} placeholder="Benefits" />
+      </div>
+    </div>
+
+    <!-- Localized content per language -->
+    <div class="rounded-[1.5rem] border border-charcoal/10 bg-white/70 p-7 shadow-[0_8px_30px_rgba(31,37,34,0.06)]">
+      <h2 class="mb-1 text-xs font-medium uppercase tracking-wider text-charcoal/50">Headline & Benefit Items</h2>
+      <p class="mb-6 text-xs text-charcoal/40">Section headline + title and body for each of the three benefits.</p>
+
+      <div class="flex gap-0 border-b border-charcoal/10 mb-7">
+        <button type="button" data-tab-btn="fr" class="admin-tab-btn active">🇫🇷 French</button>
+        <button type="button" data-tab-btn="en" class="admin-tab-btn">🇬🇧 English</button>
+        <button type="button" data-tab-btn="ar" class="admin-tab-btn">🇸🇦 Arabic</button>
+      </div>
+
+      {[
+        { key: "fr", dir: "ltr", flag: "" },
+        { key: "en", dir: "ltr", flag: "" },
+        { key: "ar", dir: "rtl", flag: "" },
+      ].map(({ key, dir }, i) => (
+        <div data-tab-panel={key} class:list={["space-y-6", i !== 0 && "hidden"]}>
+          <div class="admin-field">
+            <label>Section Headline ({key.toUpperCase()})</label>
+            <input name={`headline_${key}`} class="admin-input" dir={dir}
+              value={loc(doc.headline, key) || (DEFAULTS as any)[`headline_${key}`]} />
+          </div>
+
+          {([1,2,3] as const).map((n) => (
+            <div class="rounded-xl border border-charcoal/8 p-5 space-y-4">
+              <p class="text-xs font-semibold uppercase tracking-wider text-charcoal/40">Benefit {n}</p>
+              <div class="admin-field">
+                <label>Title ({key.toUpperCase()})</label>
+                <input name={`b${n}title_${key}`} class="admin-input" dir={dir}
+                  value={loc((doc as any)[`benefit${n}Title`], key) || (DEFAULTS as any)[`b${n}title_${key}`]} />
+              </div>
+              <div class="admin-field">
+                <label>Body ({key.toUpperCase()})</label>
+                <textarea name={`b${n}copy_${key}`} rows="3" class="admin-input" dir={dir}>
+                  {loc((doc as any)[`benefit${n}Copy`], key) || (DEFAULTS as any)[`b${n}copy_${key}`]}
+                </textarea>
+              </div>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+
+    <div class="flex justify-end">
+      <button type="submit" class="rounded-xl bg-charcoal px-8 py-2.5 text-sm font-medium text-cream transition hover:bg-charcoal/80">
+        Save Content
+      </button>
+    </div>
+  </form>
+
+  <!-- ── Section Image ─────────────────────────────────────────── -->
+  <div class="mt-8 rounded-[1.5rem] border border-charcoal/10 bg-white/70 p-7 shadow-[0_8px_30px_rgba(31,37,34,0.06)]">
+    <h2 class="mb-1 text-xs font-medium uppercase tracking-wider text-charcoal/50">Section Image</h2>
+    <p class="mb-5 text-xs text-charcoal/40">Displayed on the left side of the benefits section. Recommended: portrait orientation, min 800px wide.</p>
+
+    {realImgUrl && (
+      <div class="mb-5">
+        <p class="mb-2 text-xs font-medium uppercase tracking-wider text-charcoal/40">Current Image</p>
+        <img
+          src={realImgUrl + "?w=400&auto=format"}
+          alt="Current benefits image"
+          class="rounded-xl border border-charcoal/10 max-w-[200px] object-cover"
+        />
+        <form method="POST" class="mt-3">
+          <input type="hidden" name="_action" value="remove-image" />
+          <button type="submit" class="text-xs text-red-500 hover:text-red-700 transition">Remove image</button>
+        </form>
+      </div>
+    )}
+
+    <form method="POST" enctype="multipart/form-data" class="space-y-4">
+      <input type="hidden" name="_action" value="upload-image" />
+      <div class="admin-field max-w-md">
+        <label>Upload New Image</label>
+        <input
+          type="file"
+          name="sectionImage"
+          accept="image/jpeg,image/png,image/webp"
+          class="block w-full rounded-xl border border-charcoal/15 bg-white px-4 py-3 text-sm text-charcoal/70 file:mr-4 file:rounded-lg file:border-0 file:bg-charcoal file:px-4 file:py-1.5 file:text-xs file:font-medium file:text-cream hover:file:bg-charcoal/80 cursor-pointer"
+        />
+      </div>
+      <div class="flex justify-end max-w-md">
+        <button type="submit" class="rounded-xl bg-gold/90 px-7 py-2.5 text-sm font-medium text-white transition hover:bg-gold">
+          Upload Image
+        </button>
+      </div>
+    </form>
+  </div>
+</AdminLayout>

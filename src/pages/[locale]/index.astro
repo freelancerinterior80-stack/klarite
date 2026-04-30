@@ -44,6 +44,18 @@ const heroQuery = `*[_id == "heroSettings"][0]{
   headlineFontWeight,
 }`;
 
+const benefitsQuery = `*[_id == "benefitsSection"][0]{
+  eyebrow,
+  "headline":      headline[_key == $locale][0].value,
+  "sectionImageUrl": sectionImage.asset->url,
+  "b1title": benefit1Title[_key == $locale][0].value,
+  "b1copy":  benefit1Copy[_key == $locale][0].value,
+  "b2title": benefit2Title[_key == $locale][0].value,
+  "b2copy":  benefit2Copy[_key == $locale][0].value,
+  "b3title": benefit3Title[_key == $locale][0].value,
+  "b3copy":  benefit3Copy[_key == $locale][0].value,
+}`;
+
 const promiseQuery = `*[_id == "promiseSection"][0]{
   eyebrow, attribution, ctaUrl,
   "headline": headline[_key == $locale][0].value,
@@ -52,7 +64,7 @@ const promiseQuery = `*[_id == "promiseSection"][0]{
   "sideImageUrl": sideImage.asset->url
 }`;
 
-const [products, testimonials, ritualSteps, seoData, heroData, brandSettings, promiseData] = await Promise.all([
+const [products, testimonials, ritualSteps, seoData, heroData, brandSettings, promiseData, benefitsData] = await Promise.all([
   client.fetch(productsQuery, { locale }),
   client.fetch(testimonialsQuery, { locale }),
   client.fetch(ritualStepsQuery, { locale }),
@@ -60,6 +72,7 @@ const [products, testimonials, ritualSteps, seoData, heroData, brandSettings, pr
   client.fetch(heroQuery, { locale }),
   client.fetch(`*[_type == "brandSettings"][0]{ orderBtnLabel, orderBtnBg, orderBtnText }`),
   client.fetch(promiseQuery, { locale }),
+  client.fetch(benefitsQuery, { locale }),
 ]);
 
 const orderBtnLabel: string = brandSettings?.orderBtnLabel || "Order Now";
@@ -124,19 +137,24 @@ function getGalleryUrls(product: any, width = 900): string[] {
   return [main, ...extras].filter(Boolean) as string[];
 }
 
+const benefitsSection = {
+  eyebrow:        benefitsData?.eyebrow        || "Benefits",
+  headline:       benefitsData?.headline       || "A clean formula story told in three outcomes.",
+  sectionImageUrl: benefitsData?.sectionImageUrl || null,
+};
 const benefits = [
   {
-    title: "Clarity",
-    copy: "Gentle cleansing and intelligent hydration refine the look of texture so skin appears fresh, composed, and balanced."
+    title: benefitsData?.b1title || "Clarity",
+    copy:  benefitsData?.b1copy  || "Gentle cleansing and intelligent hydration refine the look of texture so skin appears fresh, composed, and balanced.",
   },
   {
-    title: "Softness",
-    copy: "Silken creams and weightless lotions leave behind a supple finish that feels quiet, comforting, and expensive."
+    title: benefitsData?.b2title || "Softness",
+    copy:  benefitsData?.b2copy  || "Silken creams and weightless lotions leave behind a supple finish that feels quiet, comforting, and expensive.",
   },
   {
-    title: "Radiance",
-    copy: "Each formula is designed to return light to the skin with a satin glow rather than a glossy, overworked shine."
-  }
+    title: benefitsData?.b3title || "Radiance",
+    copy:  benefitsData?.b3copy  || "Each formula is designed to return light to the skin with a satin glow rather than a glossy, overworked shine.",
+  },
 ];
 
 ---
@@ -556,10 +574,13 @@ const benefits = [
         <div class="absolute inset-x-[16%] top-[8%] h-32 rounded-full bg-white/70 blur-[36px]"></div>
         <div class="absolute inset-x-[18%] bottom-[8%] h-10 rounded-full bg-charcoal/10 blur-2xl"></div>
         <img
-          src="/images/products/lotion-hydratante-white.jpeg"
+          src={benefitsSection.sectionImageUrl
+            ? `${benefitsSection.sectionImageUrl}?w=1024&auto=format`
+            : "/images/products/lotion-hydratante-white.jpeg"}
+          onerror="this.onerror=null;this.src='/images/products/lotion-hydratante-white.jpeg'"
           width="1024"
           height="1536"
-          alt="KLARITE Body Lotion on a soft white backdrop."
+          alt="KLARITÉ product"
           class="relative h-[30rem] w-full rounded-[1.55rem] object-cover object-center sm:h-[42rem]"
           loading="lazy"
           decoding="async"
@@ -568,12 +589,12 @@ const benefits = [
       </div>
 
       <div class="max-w-[34rem]" data-reveal>
-        <p class="eyebrow">Benefits</p>
+        <p class="eyebrow">{benefitsSection.eyebrow}</p>
         <h2
           class="section-title mt-7 text-charcoal"
           style="font-size: clamp(2.6rem, 5.5vw, 6rem); max-width: 12ch;"
         >
-          A clean formula story told in three outcomes.
+          {benefitsSection.headline}
         </h2>
 
         <div class="mt-16 space-y-2">
