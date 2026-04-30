@@ -11,5 +11,6 @@ import { headerSettingsType } from "./headerSettingsType";
 import { inquiryType } from "./inquiryType";
 import { staffAccountType } from "./staffAccountType";
 import { brandSettingsType } from "./brandSettingsType";
+import { promiseSectionType } from "./promiseSectionType";
 
-export const schemaTypes = [productType, testimonialType, concernType, ritualStepType, trustPointType, seoSettingsType, heroSettingsType, footerSettingsType, campaignType, headerSettingsType, inquiryType, staffAccountType, brandSettingsType];
+export const schemaTypes = [productType, testimonialType, concernType, ritualStepType, trustPointType, seoSettingsType, heroSettingsType, footerSettingsType, campaignType, headerSettingsType, inquiryType, staffAccountType, brandSettingsType, promiseSectionType];

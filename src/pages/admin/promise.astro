@@ -1,0 +1,236 @@
+---
+export const prerender = false;
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { writeClient } from "@/sanity/write-client";
+
+const loc = (arr: any[] | null | undefined, key: string) =>
+  arr?.find((i: any) => i._key === key)?.value ?? "";
+
+let error = "";
+let successMsg = "";
+
+const DEFAULTS = {
+  eyebrow: "The KLARITÉ Promise",
+  attribution: "— La promesse KLARITÉ",
+  ctaUrl: "#signature-products",
+  headline_fr: "La peau qui parle avant vous.",
+  headline_en: "Skin that speaks before you do.",
+  headline_ar: "بشرة تتكلم قبلك.",
+  body_fr: "Chaque formule KLARITÉ est un acte de retenue — rien d'ajouté sans raison, rien d'enlevé par inadvertance.",
+  body_en: "Every KLARITÉ formula is an act of restraint — nothing added without purpose, nothing removed without care. The result is skin that looks composed, luminous, and effortlessly itself.",
+  body_ar: "كل تركيبة كلاريتي هي فعل تحفظ — لا شيء يُضاف دون هدف، ولا شيء يُزال دون عناية.",
+  ctaLabel_fr: "Découvrir la collection",
+  ctaLabel_en: "Shop Collection",
+  ctaLabel_ar: "تسوّقي المجموعة",
+};
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  const action = (form.get("_action") as string) ?? "save-text";
+
+  try {
+    await writeClient.createIfNotExists({ _id: "promiseSection", _type: "promiseSection" });
+
+    if (action === "save-text") {
+      await writeClient.patch("promiseSection").set({
+        eyebrow:     form.get("eyebrow") as string || DEFAULTS.eyebrow,
+        attribution: form.get("attribution") as string || DEFAULTS.attribution,
+        ctaUrl:      form.get("ctaUrl") as string || DEFAULTS.ctaUrl,
+        'headline[_key=="fr"].value':   form.get("headline_fr") as string,
+        'headline[_key=="en"].value':   form.get("headline_en") as string,
+        'headline[_key=="ar"].value':   form.get("headline_ar") as string,
+        'body[_key=="fr"].value':       form.get("body_fr") as string,
+        'body[_key=="en"].value':       form.get("body_en") as string,
+        'body[_key=="ar"].value':       form.get("body_ar") as string,
+        'ctaLabel[_key=="fr"].value':   form.get("ctaLabel_fr") as string,
+        'ctaLabel[_key=="en"].value':   form.get("ctaLabel_en") as string,
+        'ctaLabel[_key=="ar"].value':   form.get("ctaLabel_ar") as string,
+      }).commit();
+      successMsg = "Content saved.";
+    }
+
+    if (action === "upload-image") {
+      const file = form.get("sideImage") as File | null;
+      if (file && file.size > 0) {
+        const buffer = Buffer.from(await file.arrayBuffer());
+        const asset = await writeClient.assets.upload("image", buffer, {
+          filename: file.name,
+          contentType: file.type,
+        });
+        await writeClient.patch("promiseSection").set({
+          sideImage: { _type: "image", asset: { _type: "reference", _ref: asset._id } },
+        }).commit();
+        successMsg = "Image uploaded.";
+      } else {
+        error = "No image file selected.";
+      }
+    }
+
+    if (action === "remove-image") {
+      await writeClient.patch("promiseSection").unset(["sideImage"]).commit();
+      successMsg = "Image removed.";
+    }
+  } catch (e) {
+    error = "Save failed. Please try again.";
+  }
+}
+
+const raw = await writeClient.fetch(`*[_id == "promiseSection"][0]`);
+const doc = raw ?? {};
+
+// Ensure localized arrays exist on first save
+if (!raw) {
+  await writeClient.createIfNotExists({
+    _id: "promiseSection",
+    _type: "promiseSection",
+    headline:  [{ _key: "fr", value: "" }, { _key: "en", value: "" }, { _key: "ar", value: "" }],
+    body:      [{ _key: "fr", value: "" }, { _key: "en", value: "" }, { _key: "ar", value: "" }],
+    ctaLabel:  [{ _key: "fr", value: "" }, { _key: "en", value: "" }, { _key: "ar", value: "" }],
+  });
+}
+
+const sideImageUrl = doc?.sideImage?.asset
+  ? await writeClient.fetch(`*[_id == $id][0].url`, { id: doc.sideImage.asset._ref }).catch(() => null)
+  : null;
+
+const realImageUrl = sideImageUrl ?? (doc?.sideImage
+  ? await writeClient.fetch(`*[_id == "promiseSection"][0].sideImage.asset->url`).catch(() => null)
+  : null);
+---
+
+<AdminLayout title="Promise Section">
+  <div class="mb-8">
+    <h1 class="font-display text-3xl text-charcoal">Promise Section</h1>
+    <p class="mt-1 text-sm text-charcoal/55">Edit the dark brand statement band that appears below the trust bar.</p>
+  </div>
+
+  {error && <div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm text-red-700">{error}</div>}
+  {successMsg && <div class="mb-6 rounded-xl border border-green-200 bg-green-50 px-5 py-3 text-sm text-green-700">{successMsg}</div>}
+
+  <!-- ── Text content ──────────────────────────────────────────── -->
+  <form method="POST" class="space-y-8">
+    <input type="hidden" name="_action" value="save-text" />
+
+    <!-- Non-localized fields -->
+    <div class="rounded-[1.5rem] border border-charcoal/10 bg-white/70 p-7 shadow-[0_8px_30px_rgba(31,37,34,0.06)]">
+      <h2 class="mb-5 text-xs font-medium uppercase tracking-wider text-charcoal/50">Section Labels</h2>
+      <div class="grid gap-5 sm:grid-cols-2">
+        <div class="admin-field">
+          <label>Eyebrow Text</label>
+          <input name="eyebrow" class="admin-input" value={doc.eyebrow ?? DEFAULTS.eyebrow} placeholder="The KLARITÉ Promise" />
+        </div>
+        <div class="admin-field">
+          <label>Attribution Line</label>
+          <input name="attribution" class="admin-input" value={doc.attribution ?? DEFAULTS.attribution} placeholder="— La promesse KLARITÉ" />
+        </div>
+        <div class="admin-field">
+          <label>CTA URL</label>
+          <input name="ctaUrl" class="admin-input" value={doc.ctaUrl ?? DEFAULTS.ctaUrl} placeholder="#signature-products" />
+          <p class="mt-1 text-xs text-charcoal/35">Link the button points to (e.g. #signature-products)</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Localized content -->
+    <div class="rounded-[1.5rem] border border-charcoal/10 bg-white/70 p-7 shadow-[0_8px_30px_rgba(31,37,34,0.06)]">
+      <h2 class="mb-1 text-xs font-medium uppercase tracking-wider text-charcoal/50">Headline, Body & CTA</h2>
+      <p class="mb-6 text-xs text-charcoal/40">The large headline, body paragraph, and button label per language.</p>
+
+      <div class="flex gap-0 border-b border-charcoal/10 mb-7">
+        <button type="button" data-tab-btn="fr" class="admin-tab-btn active">🇫🇷 French</button>
+        <button type="button" data-tab-btn="en" class="admin-tab-btn">🇬🇧 English</button>
+        <button type="button" data-tab-btn="ar" class="admin-tab-btn">🇸🇦 Arabic</button>
+      </div>
+
+      <div data-tab-panel="fr" class="space-y-5">
+        <div class="admin-field">
+          <label>Headline (FR)</label>
+          <input name="headline_fr" class="admin-input" value={loc(doc.headline, "fr") || DEFAULTS.headline_fr} />
+        </div>
+        <div class="admin-field">
+          <label>Body Text (FR)</label>
+          <textarea name="body_fr" rows="4" class="admin-input">{loc(doc.body, "fr") || DEFAULTS.body_fr}</textarea>
+        </div>
+        <div class="admin-field">
+          <label>CTA Button Label (FR)</label>
+          <input name="ctaLabel_fr" class="admin-input" value={loc(doc.ctaLabel, "fr") || DEFAULTS.ctaLabel_fr} />
+        </div>
+      </div>
+
+      <div data-tab-panel="en" class="hidden space-y-5">
+        <div class="admin-field">
+          <label>Headline (EN)</label>
+          <input name="headline_en" class="admin-input" value={loc(doc.headline, "en") || DEFAULTS.headline_en} />
+        </div>
+        <div class="admin-field">
+          <label>Body Text (EN)</label>
+          <textarea name="body_en" rows="4" class="admin-input">{loc(doc.body, "en") || DEFAULTS.body_en}</textarea>
+        </div>
+        <div class="admin-field">
+          <label>CTA Button Label (EN)</label>
+          <input name="ctaLabel_en" class="admin-input" value={loc(doc.ctaLabel, "en") || DEFAULTS.ctaLabel_en} />
+        </div>
+      </div>
+
+      <div data-tab-panel="ar" class="hidden space-y-5">
+        <div class="admin-field">
+          <label>Headline (AR)</label>
+          <input name="headline_ar" class="admin-input" dir="rtl" value={loc(doc.headline, "ar") || DEFAULTS.headline_ar} />
+        </div>
+        <div class="admin-field">
+          <label>Body Text (AR)</label>
+          <textarea name="body_ar" rows="4" class="admin-input" dir="rtl">{loc(doc.body, "ar") || DEFAULTS.body_ar}</textarea>
+        </div>
+        <div class="admin-field">
+          <label>CTA Button Label (AR)</label>
+          <input name="ctaLabel_ar" class="admin-input" dir="rtl" value={loc(doc.ctaLabel, "ar") || DEFAULTS.ctaLabel_ar} />
+        </div>
+      </div>
+    </div>
+
+    <div class="flex justify-end">
+      <button type="submit" class="rounded-xl bg-charcoal px-8 py-2.5 text-sm font-medium text-cream transition hover:bg-charcoal/80">
+        Save Content
+      </button>
+    </div>
+  </form>
+
+  <!-- ── Side Image ─────────────────────────────────────────────── -->
+  <div class="mt-8 rounded-[1.5rem] border border-charcoal/10 bg-white/70 p-7 shadow-[0_8px_30px_rgba(31,37,34,0.06)]">
+    <h2 class="mb-1 text-xs font-medium uppercase tracking-wider text-charcoal/50">Side Image</h2>
+    <p class="mb-5 text-xs text-charcoal/40">Displayed on the right side of the promise section. Recommended: portrait or square, min 800px wide.</p>
+
+    {realImageUrl && (
+      <div class="mb-5">
+        <p class="mb-2 text-xs font-medium uppercase tracking-wider text-charcoal/40">Current Image</p>
+        <img
+          src={realImageUrl + "?w=400&auto=format"}
+          alt="Current side image"
+          class="rounded-xl border border-charcoal/10 max-w-[200px] object-cover"
+        />
+        <form method="POST" class="mt-3">
+          <input type="hidden" name="_action" value="remove-image" />
+          <button type="submit" class="text-xs text-red-500 hover:text-red-700 transition">Remove image</button>
+        </form>
+      </div>
+    )}
+
+    <form method="POST" enctype="multipart/form-data" class="space-y-4">
+      <input type="hidden" name="_action" value="upload-image" />
+      <div class="admin-field max-w-md">
+        <label>Upload Image</label>
+        <input
+          type="file"
+          name="sideImage"
+          accept="image/jpeg,image/png,image/webp"
+          class="block w-full rounded-xl border border-charcoal/15 bg-white px-4 py-3 text-sm text-charcoal/70 file:mr-4 file:rounded-lg file:border-0 file:bg-charcoal file:px-4 file:py-1.5 file:text-xs file:font-medium file:text-cream hover:file:bg-charcoal/80 cursor-pointer"
+        />
+      </div>
+      <div class="flex justify-end max-w-md">
+        <button type="submit" class="rounded-xl bg-gold/90 px-7 py-2.5 text-sm font-medium text-white transition hover:bg-gold">
+          Upload Image
+        </button>
+      </div>
+    </form>
+  </div>
+</AdminLayout>

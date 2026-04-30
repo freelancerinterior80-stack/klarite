@@ -44,18 +44,37 @@ const heroQuery = `*[_id == "heroSettings"][0]{
   headlineFontWeight,
 }`;
 
-const [products, testimonials, ritualSteps, seoData, heroData, brandSettings] = await Promise.all([
+const promiseQuery = `*[_id == "promiseSection"][0]{
+  eyebrow, attribution, ctaUrl,
+  "headline": headline[_key == $locale][0].value,
+  "body":     body[_key == $locale][0].value,
+  "ctaLabel": ctaLabel[_key == $locale][0].value,
+  "sideImageUrl": sideImage.asset->url
+}`;
+
+const [products, testimonials, ritualSteps, seoData, heroData, brandSettings, promiseData] = await Promise.all([
   client.fetch(productsQuery, { locale }),
   client.fetch(testimonialsQuery, { locale }),
   client.fetch(ritualStepsQuery, { locale }),
   client.fetch(seoQuery, { locale }),
   client.fetch(heroQuery, { locale }),
   client.fetch(`*[_type == "brandSettings"][0]{ orderBtnLabel, orderBtnBg, orderBtnText }`),
+  client.fetch(promiseQuery, { locale }),
 ]);
 
 const orderBtnLabel: string = brandSettings?.orderBtnLabel || "Order Now";
 const orderBtnBg: string    = brandSettings?.orderBtnBg    || "#1c1c1c";
 const orderBtnText: string  = brandSettings?.orderBtnText  || "#f6f3ee";
+
+const promise = {
+  eyebrow:     promiseData?.eyebrow     || "The KLARITÉ Promise",
+  attribution: promiseData?.attribution || "— La promesse KLARITÉ",
+  ctaUrl:      promiseData?.ctaUrl      || "#signature-products",
+  headline:    promiseData?.headline    || "Skin that speaks before you do.",
+  body:        promiseData?.body        || "Every KLARITÉ formula is an act of restraint — nothing added without purpose, nothing removed without care. The result is skin that looks composed, luminous, and effortlessly itself.",
+  ctaLabel:    promiseData?.ctaLabel    || "Shop Collection",
+  sideImageUrl: promiseData?.sideImageUrl || null,
+};
 
 // Resolve video URL: uploaded file takes priority over external URL
 const heroVideoSrc = heroData?.heroVideoFileUrl || heroData?.heroVideoUrl || null;
@@ -397,26 +416,50 @@ const benefits = [
     <!-- Decorative oversized quotation mark -->
     <div class="pointer-events-none absolute -top-6 left-[3%] select-none font-display leading-none text-white/[0.04]" style="font-size: clamp(14rem, 22vw, 24rem);" aria-hidden="true">&ldquo;</div>
     <div class="relative mx-auto max-w-[90rem]">
-      <p class="eyebrow text-cream/35 mb-8" data-reveal>The KLARITÉ Promise</p>
-      <div class="mb-8 w-10 border-t border-gold/40" data-reveal></div>
-      <h2
-        class="section-title text-cream"
-        style="font-size: clamp(3.2rem, 8.5vw, 9.5rem); max-width: 18ch;"
-        data-reveal
-      >
-        Skin that speaks before you do.
-      </h2>
-      <div class="mt-8 w-10 border-t border-gold/40" data-reveal></div>
-      <p class="mt-5 text-[0.62rem] uppercase tracking-[0.4em] text-cream/28" data-reveal>— La promesse KLARITÉ</p>
-      <div class="mt-14 grid gap-8 border-t border-white/10 pt-14 sm:grid-cols-3" data-reveal>
-        <p class="text-[0.94rem] leading-[1.8] text-cream/50 sm:col-span-2 max-w-[44rem]">
-          Every KLARITÉ formula is an act of restraint — nothing added without purpose, nothing removed without care. The result is skin that looks composed, luminous, and effortlessly itself.
-        </p>
-        <div class="flex items-end justify-start sm:justify-end">
-          <a href="#signature-products" class="cta-secondary border-white/20 text-cream/80 hover:border-gold/40 hover:text-cream">
-            Shop Collection
-          </a>
+      <div class="grid gap-12 lg:grid-cols-[1fr_auto] lg:items-start lg:gap-20">
+
+        <!-- Left: text content -->
+        <div>
+          <p class="eyebrow text-cream/35 mb-8" data-reveal>{promise.eyebrow}</p>
+          <div class="mb-8 w-10 border-t border-gold/40" data-reveal></div>
+          <h2
+            class="section-title text-cream"
+            style="font-size: clamp(3.2rem, 8.5vw, 9.5rem); max-width: 18ch;"
+            data-reveal
+          >
+            {promise.headline}
+          </h2>
+          <div class="mt-8 w-10 border-t border-gold/40" data-reveal></div>
+          <p class="mt-5 text-[0.62rem] uppercase tracking-[0.4em] text-cream/28" data-reveal>{promise.attribution}</p>
+          <div class="mt-14 grid gap-8 border-t border-white/10 pt-14 sm:grid-cols-3" data-reveal>
+            <p class="text-[0.94rem] leading-[1.8] text-cream/50 sm:col-span-2 max-w-[44rem]">
+              {promise.body}
+            </p>
+            <div class="flex items-end justify-start sm:justify-end">
+              <a href={promise.ctaUrl} class="cta-secondary border-white/20 text-cream/80 hover:border-gold/40 hover:text-cream">
+                {promise.ctaLabel}
+              </a>
+            </div>
+          </div>
         </div>
+
+        <!-- Right: side image (only shown when set) -->
+        {promise.sideImageUrl && (
+          <div class="hidden lg:block shrink-0 w-[320px] xl:w-[380px]" data-reveal>
+            <div class="relative overflow-hidden rounded-2xl">
+              <img
+                src={`${promise.sideImageUrl}?w=760&auto=format`}
+                alt="KLARITÉ promise"
+                class="w-full object-cover"
+                style="aspect-ratio: 3/4;"
+                loading="lazy"
+                decoding="async"
+              />
+              <!-- Subtle gold border overlay -->
+              <div class="absolute inset-0 rounded-2xl ring-1 ring-gold/20 pointer-events-none"></div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   </section>
