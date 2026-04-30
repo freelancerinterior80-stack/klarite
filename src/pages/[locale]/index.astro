@@ -7,7 +7,7 @@ import { LOCALES, type Locale } from "@/i18n/config";
 import { getTranslations } from "@/i18n";
 import { client } from "@/sanity/client";
 import { urlFor } from "@/sanity/image";
-import { productsQuery, testimonialsQuery, ritualStepsQuery } from "@/sanity/queries";
+import { productsQuery, testimonialsQuery, ritualStepsQuery, trustPointsQuery } from "@/sanity/queries";
 
 const { locale } = Astro.params as { locale: Locale };
 if (!LOCALES.includes(locale)) return Astro.redirect("/fr");
@@ -64,7 +64,7 @@ const promiseQuery = `*[_id == "promiseSection"][0]{
   "sideImageUrl": sideImage.asset->url
 }`;
 
-const [products, testimonials, ritualSteps, seoData, heroData, brandSettings, promiseData, benefitsData] = await Promise.all([
+const [products, testimonials, ritualSteps, seoData, heroData, brandSettings, promiseData, benefitsData, trustPointDocs] = await Promise.all([
   client.fetch(productsQuery, { locale }),
   client.fetch(testimonialsQuery, { locale }),
   client.fetch(ritualStepsQuery, { locale }),
@@ -73,6 +73,7 @@ const [products, testimonials, ritualSteps, seoData, heroData, brandSettings, pr
   client.fetch(`*[_type == "brandSettings"][0]{ orderBtnLabel, orderBtnBg, orderBtnText }`),
   client.fetch(promiseQuery, { locale }),
   client.fetch(benefitsQuery, { locale }),
+  client.fetch(trustPointsQuery, { locale }),
 ]);
 
 const orderBtnLabel: string = brandSettings?.orderBtnLabel || "Order Now";
@@ -412,12 +413,12 @@ const benefits = [
   </script>
 
   <!-- ── Trust bar ─────────────────────────────────────────────────── -->
-  <TrustBar trustPoints={[
-    hero.trust1 || "Artisanat Tunisien",
-    hero.trust2 || "Formules Naturelles",
-    hero.trust3 || "Cruelty-Free",
-    "Sans Parabènes",
-  ]} />
+  <TrustBar trustPoints={
+    (trustPointDocs?.length
+      ? trustPointDocs.map((tp: any) => tp.text).filter(Boolean)
+      : [hero.trust1 || "Artisanat Tunisien", hero.trust2 || "Formules Naturelles", hero.trust3 || "Cruelty-Free", "Sans Parabènes"]
+    )
+  } />
 
   <!-- ── Marquee ticker ─────────────────────────────────────────────── -->
   <div class="marquee-outer section-band border-y border-charcoal/8 bg-white py-5">
