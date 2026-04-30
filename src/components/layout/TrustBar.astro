@@ -14,7 +14,7 @@ const t = getTranslations(locale);
 <section class="px-4 py-5 sm:px-6 lg:px-10">
   <div class="panel mx-auto max-w-7xl rounded-full border border-white/60 px-6 py-4">
     <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-      <p class="eyebrow">{t.sections.trustBar.label}</p>
+      <p class="eyebrow shrink-0 whitespace-nowrap">{t.sections.trustBar.label}</p>
       <div class="grid gap-3 text-sm uppercase tracking-[0.18em] text-charcoal/62 sm:grid-cols-2 lg:flex lg:flex-nowrap lg:justify-end lg:gap-5">
         {trustPoints.map((point) => <span class="whitespace-nowrap">{point}</span>)}
       </div>
