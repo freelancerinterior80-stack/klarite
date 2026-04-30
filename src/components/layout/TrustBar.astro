@@ -15,8 +15,8 @@ const t = getTranslations(locale);
   <div class="panel mx-auto max-w-7xl rounded-full border border-white/60 px-6 py-4">
     <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
       <p class="eyebrow shrink-0 whitespace-nowrap">{t.sections.trustBar.label}</p>
-      <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm uppercase tracking-[0.18em] text-charcoal/62 lg:justify-end">
-        {trustPoints.map((point) => <span class="max-w-[24ch] leading-snug">{point}</span>)}
+      <div class="flex flex-nowrap items-center gap-x-6 overflow-x-hidden text-[0.67rem] uppercase tracking-[0.18em] text-charcoal/62 lg:justify-end">
+        {trustPoints.map((point) => <span class="line-clamp-1 shrink-0">{point}</span>)}
       </div>
     </div>
   </div>
