@@ -1,0 +1,331 @@
+---
+export const prerender = false;
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { writeClient } from "@/sanity/write-client";
+
+const loc = (arr: any[] | null | undefined, key: string) =>
+  arr?.find((i: any) => i._key === key)?.value ?? "";
+
+let error = "";
+let successMsg = "";
+
+const DEFAULTS = {
+  eyebrow: "Signature Products",
+  headline_fr: "Three essentials that define the KLARITÉ wardrobe.",
+  headline_en: "Three essentials that define the KLARITÉ wardrobe.",
+  headline_ar: "ثلاثة أساسيات تحدد هوية خزانة ملابس كلاريتي.",
+  ctaLabel_fr: "Voir la collection complète",
+  ctaLabel_en: "View Full Collection",
+  ctaLabel_ar: "عرض المجموعة الكاملة",
+};
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  const action = (form.get("_action") as string) ?? "save-text";
+
+  try {
+    await writeClient.createIfNotExists({ _id: "signatureProductsSection", _type: "signatureProductsSection" });
+
+    if (action === "save-typography") {
+      await writeClient.patch("signatureProductsSection").set({
+        headlineFontFamily: (form.get("headlineFontFamily") as string) ?? "",
+        headlineFontSize:   (form.get("headlineFontSize")   as string) ?? "",
+        headlineFontWeight: (form.get("headlineFontWeight") as string) ?? "",
+        headlineAlignment:  (form.get("headlineAlignment")  as string) ?? "left",
+      }).commit();
+      successMsg = "Typography saved.";
+
+    } else {
+      const g = (name: string) => (form.get(name) as string) ?? "";
+      await writeClient.patch("signatureProductsSection").set({
+        eyebrow: g("eyebrow"),
+        ctaUrl:  g("ctaUrl"),
+        'headline[_key=="fr"].value': g("headline_fr"),
+        'headline[_key=="en"].value': g("headline_en"),
+        'headline[_key=="ar"].value': g("headline_ar"),
+        'ctaLabel[_key=="fr"].value': g("ctaLabel_fr"),
+        'ctaLabel[_key=="en"].value': g("ctaLabel_en"),
+        'ctaLabel[_key=="ar"].value': g("ctaLabel_ar"),
+      }).commit();
+      successMsg = "Text saved.";
+    }
+  } catch (e) {
+    error = "Save failed. Please try again.";
+  }
+}
+
+// Bootstrap empty doc on first visit
+const _existing = await writeClient.fetch(`*[_id == "signatureProductsSection"][0]`);
+if (!_existing) {
+  const emptyLoc = (fields: string[]) =>
+    fields.reduce((acc: any, f: string) => ({
+      ...acc,
+      [f]: [{ _key: "fr", value: "" }, { _key: "en", value: "" }, { _key: "ar", value: "" }],
+    }), {});
+
+  await writeClient.createIfNotExists({
+    _id: "signatureProductsSection",
+    _type: "signatureProductsSection",
+    ...emptyLoc(["headline", "ctaLabel"]),
+  });
+}
+
+const doc = await writeClient.fetch(`*[_id == "signatureProductsSection"][0]{
+  eyebrow, ctaUrl,
+  headline, ctaLabel,
+  headlineFontFamily, headlineFontSize, headlineFontWeight, headlineAlignment,
+}`);
+
+const v = (field: string, locale: string) => loc(doc?.[field], locale);
+const val = (field: string, locale: string) =>
+  v(field, locale) || (DEFAULTS as any)[`${field}_${locale}`] || "";
+---
+
+<AdminLayout title="Signature Products Section">
+  <div class="mb-8">
+    <h1 class="font-display text-3xl text-charcoal">Signature Products Section</h1>
+    <p class="mt-1 text-sm text-charcoal/55">Control the headline text, alignment, font style, CTA button, and eyebrow for the Signature Products section.</p>
+  </div>
+
+  {error && <div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm text-red-700">{error}</div>}
+  {successMsg && <div class="mb-6 rounded-xl border border-green-200 bg-green-50 px-5 py-3 text-sm text-green-700">{successMsg}</div>}
+
+  <!-- ── TYPOGRAPHY ──────────────────────────────────────────── -->
+  <div class="rounded-[1.5rem] border border-charcoal/10 bg-white/70 p-7 shadow-[0_8px_30px_rgba(31,37,34,0.06)] mb-6">
+    <h2 class="mb-1 text-xs font-medium uppercase tracking-wider text-charcoal/50">Headline Typography</h2>
+    <p class="mb-6 text-xs text-charcoal/40">Controls font family, size, weight, and alignment of the large section headline.</p>
+
+    <form method="POST" class="space-y-6" id="typo-form">
+      <input type="hidden" name="_action" value="save-typography" />
+
+      <div class="grid gap-5 sm:grid-cols-4">
+
+        <!-- Font family -->
+        <div class="admin-field">
+          <label>Font Family</label>
+          <select name="headlineFontFamily" id="typo-font" class="admin-input">
+            <optgroup label="— Web fonts (already loaded) —">
+              <option value="'Playfair Display', Georgia, serif" selected={(!doc?.headlineFontFamily || doc.headlineFontFamily === "'Playfair Display', Georgia, serif") || undefined}>Playfair Display (default)</option>
+              <option value="Inter, Arial, sans-serif" selected={doc?.headlineFontFamily === "Inter, Arial, sans-serif" || undefined}>Inter</option>
+              <option value="Cairo, Arial, sans-serif" selected={doc?.headlineFontFamily === "Cairo, Arial, sans-serif" || undefined}>Cairo (Arabic)</option>
+            </optgroup>
+            <optgroup label="— System serif —">
+              <option value="Georgia, serif" selected={doc?.headlineFontFamily === "Georgia, serif" || undefined}>Georgia</option>
+              <option value="'Palatino Linotype', Palatino, serif" selected={doc?.headlineFontFamily === "'Palatino Linotype', Palatino, serif" || undefined}>Palatino</option>
+              <option value="'Times New Roman', Times, serif" selected={doc?.headlineFontFamily === "'Times New Roman', Times, serif" || undefined}>Times New Roman</option>
+              <option value="Garamond, serif" selected={doc?.headlineFontFamily === "Garamond, serif" || undefined}>Garamond</option>
+              <option value="Baskerville, serif" selected={doc?.headlineFontFamily === "Baskerville, serif" || undefined}>Baskerville</option>
+            </optgroup>
+            <optgroup label="— System sans-serif —">
+              <option value="'Helvetica Neue', Helvetica, Arial, sans-serif" selected={doc?.headlineFontFamily === "'Helvetica Neue', Helvetica, Arial, sans-serif" || undefined}>Helvetica Neue</option>
+              <option value="Arial, Helvetica, sans-serif" selected={doc?.headlineFontFamily === "Arial, Helvetica, sans-serif" || undefined}>Arial</option>
+              <option value="Verdana, Geneva, sans-serif" selected={doc?.headlineFontFamily === "Verdana, Geneva, sans-serif" || undefined}>Verdana</option>
+              <option value="Optima, 'Segoe UI', sans-serif" selected={doc?.headlineFontFamily === "Optima, 'Segoe UI', sans-serif" || undefined}>Optima</option>
+              <option value="'Century Gothic', Futura, sans-serif" selected={doc?.headlineFontFamily === "'Century Gothic', Futura, sans-serif" || undefined}>Century Gothic</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <!-- Font size -->
+        <div class="admin-field">
+          <label>Font Size — <span id="typo-size-display">{doc?.headlineFontSize ?? "7"}rem</span></label>
+          <input
+            type="range"
+            name="headlineFontSize"
+            id="typo-size"
+            min="2"
+            max="10"
+            step="0.1"
+            value={doc?.headlineFontSize ?? "7"}
+            class="mt-3 w-full accent-gold"
+          />
+          <div class="mt-1 flex justify-between text-[10px] text-charcoal/35">
+            <span>2 rem</span><span>10 rem</span>
+          </div>
+        </div>
+
+        <!-- Font weight -->
+        <div class="admin-field">
+          <label>Font Weight</label>
+          <select name="headlineFontWeight" id="typo-weight" class="admin-input">
+            <option value="400" selected={(!doc?.headlineFontWeight || doc.headlineFontWeight === "400") || undefined}>400 — Regular</option>
+            <option value="500" selected={doc?.headlineFontWeight === "500" || undefined}>500 — Medium</option>
+            <option value="600" selected={doc?.headlineFontWeight === "600" || undefined}>600 — SemiBold</option>
+            <option value="700" selected={doc?.headlineFontWeight === "700" || undefined}>700 — Bold</option>
+            <option value="800" selected={doc?.headlineFontWeight === "800" || undefined}>800 — ExtraBold</option>
+            <option value="900" selected={doc?.headlineFontWeight === "900" || undefined}>900 — Black</option>
+          </select>
+        </div>
+
+        <!-- Alignment -->
+        <div class="admin-field">
+          <label>Alignment</label>
+          <div class="mt-1 flex gap-1" id="align-group">
+            {(["left","center","right"] as const).map((a) => {
+              const isActive = (doc?.headlineAlignment ?? "left") === a;
+              const icons = {
+                left:   `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>`,
+                center: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>`,
+                right:  `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="6" y1="18" x2="21" y2="18"/></svg>`,
+              };
+              return (
+                <label class:list={["flex flex-1 cursor-pointer items-center justify-center rounded-lg border py-2 transition", isActive ? "border-charcoal bg-charcoal text-cream" : "border-charcoal/15 bg-white text-charcoal/60 hover:border-charcoal/30"]}>
+                  <input type="radio" name="headlineAlignment" value={a} checked={isActive || undefined} class="sr-only" />
+                  <span set:html={icons[a]} />
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      <!-- Live preview -->
+      <div class="rounded-xl border border-charcoal/10 bg-[#f8f6f2] px-6 py-5 overflow-hidden">
+        <p class="mb-3 text-[10px] uppercase tracking-widest text-charcoal/35">Live Preview</p>
+        <p
+          id="typo-preview"
+          style={`font-family:${doc?.headlineFontFamily ?? "'Playfair Display', Georgia, serif"}; font-size: clamp(1.4rem, 3.5vw, ${doc?.headlineFontSize ?? "7"}rem); font-weight:${doc?.headlineFontWeight ?? "400"}; text-align:${doc?.headlineAlignment ?? "left"}; line-height:1.05; color:#1a1a1a;`}
+        >
+          {val("headline", "fr") || DEFAULTS.headline_fr}
+        </p>
+      </div>
+
+      <div class="flex justify-end">
+        <button type="submit" class="rounded-xl bg-charcoal px-6 py-2 text-xs font-medium text-cream transition hover:bg-charcoal/80">
+          Save Typography
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ── TEXT CONTENT ──────────────────────────────────────────── -->
+  <form method="POST" class="space-y-6">
+    <input type="hidden" name="_action" value="save-text" />
+
+    <!-- Eyebrow -->
+    <div class="rounded-[1.5rem] border border-charcoal/10 bg-white/70 p-7 shadow-[0_8px_30px_rgba(31,37,34,0.06)]">
+      <h2 class="mb-5 text-xs font-medium uppercase tracking-wider text-charcoal/50">Eyebrow Label</h2>
+      <div class="admin-field max-w-sm">
+        <label>Eyebrow (same for all languages)</label>
+        <input name="eyebrow" class="admin-input" value={doc?.eyebrow ?? DEFAULTS.eyebrow} placeholder="e.g. Signature Products" />
+      </div>
+    </div>
+
+    <!-- Headline (localized) -->
+    <div class="rounded-[1.5rem] border border-charcoal/10 bg-white/70 p-7 shadow-[0_8px_30px_rgba(31,37,34,0.06)]">
+      <h2 class="mb-1 text-xs font-medium uppercase tracking-wider text-charcoal/50">Headline</h2>
+      <p class="mb-6 text-xs text-charcoal/40">The large section heading. Keep it under 12 words.</p>
+
+      <div class="flex gap-0 border-b border-charcoal/10 mb-7">
+        <button type="button" data-tab-btn="fr" data-tab-group="headline" class="admin-tab-btn active">🇫🇷 French</button>
+        <button type="button" data-tab-btn="en" data-tab-group="headline" class="admin-tab-btn">🇬🇧 English</button>
+        <button type="button" data-tab-btn="ar" data-tab-group="headline" class="admin-tab-btn">🇸🇦 Arabic</button>
+      </div>
+
+      {["fr", "en", "ar"].map((locale, li) => (
+        <div data-tab-panel={locale} data-tab-group="headline" class:list={["space-y-4", li > 0 && "hidden"]}>
+          <div class="admin-field">
+            <label>Headline ({locale.toUpperCase()})</label>
+            <textarea
+              name={`headline_${locale}`}
+              rows={3}
+              class="admin-input"
+              dir={locale === "ar" ? "rtl" : undefined}
+            >{val("headline", locale)}</textarea>
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <!-- CTA (localized label + single URL) -->
+    <div class="rounded-[1.5rem] border border-charcoal/10 bg-white/70 p-7 shadow-[0_8px_30px_rgba(31,37,34,0.06)]">
+      <h2 class="mb-1 text-xs font-medium uppercase tracking-wider text-charcoal/50">CTA Button</h2>
+      <p class="mb-6 text-xs text-charcoal/40">The button below the headline. URL is the same across all languages.</p>
+
+      <div class="mb-6 admin-field max-w-sm">
+        <label>Button URL</label>
+        <input name="ctaUrl" class="admin-input" value={doc?.ctaUrl ?? "#collection-grid"} placeholder="#collection-grid" />
+      </div>
+
+      <div class="flex gap-0 border-b border-charcoal/10 mb-7">
+        <button type="button" data-tab-btn="fr" data-tab-group="cta" class="admin-tab-btn active">🇫🇷 French</button>
+        <button type="button" data-tab-btn="en" data-tab-group="cta" class="admin-tab-btn">🇬🇧 English</button>
+        <button type="button" data-tab-btn="ar" data-tab-group="cta" class="admin-tab-btn">🇸🇦 Arabic</button>
+      </div>
+
+      {["fr", "en", "ar"].map((locale, li) => (
+        <div data-tab-panel={locale} data-tab-group="cta" class:list={["space-y-4", li > 0 && "hidden"]}>
+          <div class="admin-field max-w-sm">
+            <label>Button Label ({locale.toUpperCase()})</label>
+            <input
+              name={`ctaLabel_${locale}`}
+              class="admin-input"
+              value={val("ctaLabel", locale)}
+              dir={locale === "ar" ? "rtl" : undefined}
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <div class="flex justify-end">
+      <button type="submit" class="rounded-xl bg-charcoal px-8 py-2.5 text-sm font-medium text-cream transition hover:bg-charcoal/80">
+        Save Text
+      </button>
+    </div>
+  </form>
+</AdminLayout>
+
+<script>
+  // ── Typography live preview ─────────────────────────────────
+  const preview   = document.getElementById("typo-preview") as HTMLElement | null;
+  const fontSel   = document.getElementById("typo-font")    as HTMLSelectElement | null;
+  const sizeRange = document.getElementById("typo-size")    as HTMLInputElement | null;
+  const sizeDisp  = document.getElementById("typo-size-display") as HTMLElement | null;
+  const weightSel = document.getElementById("typo-weight")  as HTMLSelectElement | null;
+  const alignGrp  = document.getElementById("align-group")  as HTMLElement | null;
+
+  function updatePreview() {
+    if (!preview) return;
+    const ff = fontSel?.value ?? "'Playfair Display', Georgia, serif";
+    const fs = sizeRange?.value ?? "7";
+    const fw = weightSel?.value ?? "400";
+    const fa = (alignGrp?.querySelector('input[name="headlineAlignment"]:checked') as HTMLInputElement | null)?.value ?? "left";
+    if (sizeDisp) sizeDisp.textContent = `${fs}rem`;
+    preview.style.fontFamily = ff;
+    preview.style.fontSize   = `clamp(1.4rem, 3.5vw, ${fs}rem)`;
+    preview.style.fontWeight = fw;
+    preview.style.textAlign  = fa;
+  }
+
+  fontSel?.addEventListener("change", updatePreview);
+  sizeRange?.addEventListener("input", updatePreview);
+  weightSel?.addEventListener("change", updatePreview);
+  alignGrp?.addEventListener("change", (e) => {
+    const radio = e.target as HTMLInputElement;
+    alignGrp.querySelectorAll("label").forEach((l) => {
+      const active = l.querySelector("input")?.value === radio.value;
+      l.classList.toggle("border-charcoal",    active);
+      l.classList.toggle("bg-charcoal",        active);
+      l.classList.toggle("text-cream",         active);
+      l.classList.toggle("border-charcoal/15", !active);
+      l.classList.toggle("bg-white",           !active);
+      l.classList.toggle("text-charcoal/60",   !active);
+    });
+    updatePreview();
+  });
+
+  // ── Locale tab switching ────────────────────────────────────
+  document.querySelectorAll<HTMLElement>("[data-tab-btn][data-tab-group]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const locale = btn.dataset.tabBtn!;
+      const group  = btn.dataset.tabGroup!;
+      document.querySelectorAll<HTMLElement>(`[data-tab-btn][data-tab-group="${group}"]`).forEach((b) =>
+        b.classList.toggle("active", b === btn)
+      );
+      document.querySelectorAll<HTMLElement>(`[data-tab-panel][data-tab-group="${group}"]`).forEach((p) => {
+        p.classList.toggle("hidden", p.dataset.tabPanel !== locale);
+      });
+    });
+  });
+</script>

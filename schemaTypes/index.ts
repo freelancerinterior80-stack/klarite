@@ -14,5 +14,6 @@ import { brandSettingsType } from "./brandSettingsType";
 import { promiseSectionType } from "./promiseSectionType";
 import { benefitsSectionType } from "./benefitsSectionType";
 import { bestSellersSectionType } from "./bestSellersSectionType";
+import { signatureProductsSectionType } from "./signatureProductsSectionType";
 
-export const schemaTypes = [productType, testimonialType, concernType, ritualStepType, trustPointType, seoSettingsType, heroSettingsType, footerSettingsType, campaignType, headerSettingsType, inquiryType, staffAccountType, brandSettingsType, promiseSectionType, benefitsSectionType, bestSellersSectionType];
+export const schemaTypes = [productType, testimonialType, concernType, ritualStepType, trustPointType, seoSettingsType, heroSettingsType, footerSettingsType, campaignType, headerSettingsType, inquiryType, staffAccountType, brandSettingsType, promiseSectionType, benefitsSectionType, bestSellersSectionType, signatureProductsSectionType];

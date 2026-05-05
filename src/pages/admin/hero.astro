@@ -103,6 +103,7 @@ if (Astro.request.method === "POST") {
         headlineFontFamily: (form.get("headlineFontFamily") as string) ?? "",
         headlineFontSize:   (form.get("headlineFontSize")   as string) ?? "",
         headlineFontWeight: (form.get("headlineFontWeight") as string) ?? "",
+        headlineAlignment:  (form.get("headlineAlignment")  as string) ?? "left",
       }).commit();
       successMsg = "Typography saved.";
 
@@ -182,6 +183,7 @@ const doc = await writeClient.fetch(`*[_id == "heroSettings"][0]{
   headlineFontFamily,
   headlineFontSize,
   headlineFontWeight,
+  headlineAlignment,
 }`);
 
 const v = (field: string, locale: string) => loc(doc?.[field], locale);
@@ -365,7 +367,7 @@ const currentMediaType: string = doc?.mediaType ?? "image";
     <form method="POST" class="space-y-6" id="typo-form">
       <input type="hidden" name="_action" value="save-typography" />
 
-      <div class="grid gap-5 sm:grid-cols-3">
+      <div class="grid gap-5 sm:grid-cols-4">
 
         <!-- Font family -->
         <div class="admin-field">
@@ -428,6 +430,27 @@ const currentMediaType: string = doc?.mediaType ?? "image";
             <option value="900" selected={doc?.headlineFontWeight === "900" || undefined}>900 — Black</option>
           </select>
         </div>
+
+        <!-- Alignment -->
+        <div class="admin-field">
+          <label>Alignment</label>
+          <div class="mt-1 flex gap-1" id="align-group">
+            {(["left","center","right"] as const).map((a) => {
+              const isActive = (doc?.headlineAlignment ?? "left") === a;
+              const icons = {
+                left:   `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>`,
+                center: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>`,
+                right:  `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="6" y1="18" x2="21" y2="18"/></svg>`,
+              };
+              return (
+                <label class:list={["flex flex-1 cursor-pointer items-center justify-center rounded-lg border py-2 transition", isActive ? "border-charcoal bg-charcoal text-cream" : "border-charcoal/15 bg-white text-charcoal/60 hover:border-charcoal/30"]}>
+                  <input type="radio" name="headlineAlignment" value={a} checked={isActive || undefined} class="sr-only" />
+                  <span set:html={icons[a]} />
+                </label>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       <!-- Live preview -->
@@ -435,7 +458,7 @@ const currentMediaType: string = doc?.mediaType ?? "image";
         <p class="mb-3 text-[10px] uppercase tracking-widest text-charcoal/35">Live Preview</p>
         <p
           id="typo-preview"
-          style={`font-family:${doc?.headlineFontFamily ?? "'Playfair Display', Georgia, serif"}; font-size: clamp(1.6rem, 4vw, ${doc?.headlineFontSize ?? "7.5"}rem); font-weight:${doc?.headlineFontWeight ?? "400"}; line-height:1.05; color:#1a1a1a;`}
+          style={`font-family:${doc?.headlineFontFamily ?? "'Playfair Display', Georgia, serif"}; font-size: clamp(1.6rem, 4vw, ${doc?.headlineFontSize ?? "7.5"}rem); font-weight:${doc?.headlineFontWeight ?? "400"}; text-align:${doc?.headlineAlignment ?? "left"}; line-height:1.05; color:#1a1a1a;`}
         >
           {val("headline", "fr", "Quiet luxury for skin that looks luminous and composed.")}
         </p>
@@ -580,26 +603,42 @@ const currentMediaType: string = doc?.mediaType ?? "image";
 
 <script>
   // ── Typography live preview ─────────────────────────────────
-  const preview  = document.getElementById("typo-preview") as HTMLElement | null;
-  const fontSel  = document.getElementById("typo-font")    as HTMLSelectElement | null;
-  const sizeRange = document.getElementById("typo-size")   as HTMLInputElement | null;
-  const sizeDisp = document.getElementById("typo-size-display") as HTMLElement | null;
-  const weightSel = document.getElementById("typo-weight") as HTMLSelectElement | null;
+  const preview   = document.getElementById("typo-preview") as HTMLElement | null;
+  const fontSel   = document.getElementById("typo-font")    as HTMLSelectElement | null;
+  const sizeRange = document.getElementById("typo-size")    as HTMLInputElement | null;
+  const sizeDisp  = document.getElementById("typo-size-display") as HTMLElement | null;
+  const weightSel = document.getElementById("typo-weight")  as HTMLSelectElement | null;
+  const alignGrp  = document.getElementById("align-group")  as HTMLElement | null;
 
   function updatePreview() {
     if (!preview) return;
     const ff = fontSel?.value ?? "'Playfair Display', Georgia, serif";
     const fs = sizeRange?.value ?? "7.5";
     const fw = weightSel?.value ?? "400";
+    const fa = (alignGrp?.querySelector('input[name="headlineAlignment"]:checked') as HTMLInputElement | null)?.value ?? "left";
     if (sizeDisp) sizeDisp.textContent = `${fs}rem`;
     preview.style.fontFamily  = ff;
     preview.style.fontSize    = `clamp(1.6rem, 4vw, ${fs}rem)`;
     preview.style.fontWeight  = fw;
+    preview.style.textAlign   = fa;
   }
 
   fontSel?.addEventListener("change", updatePreview);
   sizeRange?.addEventListener("input", updatePreview);
   weightSel?.addEventListener("change", updatePreview);
+  alignGrp?.addEventListener("change", (e) => {
+    const radio = e.target as HTMLInputElement;
+    alignGrp.querySelectorAll("label").forEach((l) => {
+      const active = l.querySelector("input")?.value === radio.value;
+      l.classList.toggle("border-charcoal",   active);
+      l.classList.toggle("bg-charcoal",       active);
+      l.classList.toggle("text-cream",        active);
+      l.classList.toggle("border-charcoal/15", !active);
+      l.classList.toggle("bg-white",          !active);
+      l.classList.toggle("text-charcoal/60",  !active);
+    });
+    updatePreview();
+  });
 
   document.querySelectorAll<HTMLElement>("[data-tab-btn][data-tab-group]").forEach((btn) => {
     btn.addEventListener("click", () => {

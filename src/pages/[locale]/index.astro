@@ -42,6 +42,7 @@ const heroQuery = `*[_id == "heroSettings"][0]{
   headlineFontFamily,
   headlineFontSize,
   headlineFontWeight,
+  headlineAlignment,
 }`;
 
 const benefitsQuery = `*[_id == "benefitsSection"][0]{
@@ -64,7 +65,14 @@ const promiseQuery = `*[_id == "promiseSection"][0]{
   "sideImageUrl": sideImage.asset->url
 }`;
 
-const [products, testimonials, ritualSteps, seoData, heroData, brandSettings, promiseData, benefitsData, trustPointDocs, bestSellersMeta] = await Promise.all([
+const signatureProductsQuery = `*[_id == "signatureProductsSection"][0]{
+  eyebrow, ctaUrl,
+  "headline": headline[_key == $locale][0].value,
+  "ctaLabel": ctaLabel[_key == $locale][0].value,
+  headlineFontFamily, headlineFontSize, headlineFontWeight, headlineAlignment,
+}`;
+
+const [products, testimonials, ritualSteps, seoData, heroData, brandSettings, promiseData, benefitsData, trustPointDocs, bestSellersMeta, signatureProductsMeta] = await Promise.all([
   client.fetch(productsQuery, { locale }),
   client.fetch(testimonialsQuery, { locale }),
   client.fetch(ritualStepsQuery, { locale }),
@@ -80,6 +88,7 @@ const [products, testimonials, ritualSteps, seoData, heroData, brandSettings, pr
     "subtitle": subtitle[_key == $locale][0].value,
     "dragHint": dragHint[_key == $locale][0].value
   }`, { locale }),
+  client.fetch(signatureProductsQuery, { locale }),
 ]);
 
 const orderBtnLabel: string = brandSettings?.orderBtnLabel || "Order Now";
@@ -120,6 +129,7 @@ const hero = {
   headlineFontFamily: heroData?.headlineFontFamily || "'Playfair Display', Georgia, serif",
   headlineFontSize:   heroData?.headlineFontSize   || "7.5",
   headlineFontWeight: heroData?.headlineFontWeight || "400",
+  headlineAlignment:  heroData?.headlineAlignment  || "left",
 };
 
 const defaultTicker = [
@@ -164,6 +174,17 @@ const benefits = [
   },
 ];
 
+const signatureSection = {
+  eyebrow:          signatureProductsMeta?.eyebrow          || "Signature Products",
+  headline:         signatureProductsMeta?.headline          || "Three essentials that define the KLARITÉ wardrobe.",
+  ctaLabel:         signatureProductsMeta?.ctaLabel          || "View Full Collection",
+  ctaUrl:           signatureProductsMeta?.ctaUrl            || "#collection-grid",
+  headlineFontFamily: signatureProductsMeta?.headlineFontFamily || "'Playfair Display', Georgia, serif",
+  headlineFontSize:   signatureProductsMeta?.headlineFontSize   || "7",
+  headlineFontWeight: signatureProductsMeta?.headlineFontWeight || "400",
+  headlineAlignment:  signatureProductsMeta?.headlineAlignment  || "left",
+};
+
 ---
 
 <BaseLayout
@@ -207,7 +228,7 @@ const benefits = [
 
         <h1
           class="section-title mt-6 text-charcoal"
-          style={`font-family:${hero.headlineFontFamily}; font-size:clamp(3.2rem, 7vw, ${hero.headlineFontSize}rem); font-weight:${hero.headlineFontWeight}; max-width:12ch; line-height:1.04;`}
+          style={`font-family:${hero.headlineFontFamily}; font-size:clamp(3.2rem, 7vw, ${hero.headlineFontSize}rem); font-weight:${hero.headlineFontWeight}; text-align:${hero.headlineAlignment}; max-width:12ch; line-height:1.04;`}
         >
           {hero.headline}
         </h1>
@@ -493,15 +514,15 @@ const benefits = [
     <div class="mx-auto max-w-[90rem]">
       <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between" data-reveal>
         <div>
-          <p class="eyebrow">Signature Products</p>
+          <p class="eyebrow">{signatureSection.eyebrow}</p>
           <h2
             class="section-title mt-7 text-charcoal"
-            style="font-size: clamp(2.8rem, 6.5vw, 7rem); max-width: 14ch;"
+            style={`font-family:${signatureSection.headlineFontFamily}; font-size:clamp(2.8rem, 6.5vw, ${signatureSection.headlineFontSize}rem); font-weight:${signatureSection.headlineFontWeight}; text-align:${signatureSection.headlineAlignment}; max-width:14ch;`}
           >
-            Three essentials that define the KLARITÉ wardrobe.
+            {signatureSection.headline}
           </h2>
         </div>
-        <a href="#collection-grid" class="cta-primary mb-1 self-start lg:self-auto shrink-0">View Full Collection</a>
+        <a href={signatureSection.ctaUrl} class="cta-primary mb-1 self-start lg:self-auto shrink-0">{signatureSection.ctaLabel}</a>
       </div>
 
       <div class="mt-20 grid gap-10 xl:grid-cols-3">

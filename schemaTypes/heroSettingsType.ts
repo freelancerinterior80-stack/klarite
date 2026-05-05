@@ -48,6 +48,23 @@ export const heroSettingsType = defineType({
       of: [{ type: "string" }],
       description: "Short phrases scrolling in the ticker bar below the hero. One phrase per item.",
     }),
+    defineField({ name: "headlineFontFamily", title: "Headline Font Family", type: "string", initialValue: "'Playfair Display', Georgia, serif" }),
+    defineField({ name: "headlineFontSize",   title: "Headline Font Size (rem)", type: "string", initialValue: "7.5" }),
+    defineField({ name: "headlineFontWeight", title: "Headline Font Weight",     type: "string", initialValue: "400" }),
+    defineField({
+      name: "headlineAlignment",
+      title: "Headline Alignment",
+      type: "string",
+      initialValue: "left",
+      options: {
+        list: [
+          { title: "Left",   value: "left" },
+          { title: "Center", value: "center" },
+          { title: "Right",  value: "right" },
+        ],
+        layout: "radio",
+      },
+    }),
   ],
   preview: {
     prepare() {
