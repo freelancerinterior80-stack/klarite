@@ -64,7 +64,7 @@ const promiseQuery = `*[_id == "promiseSection"][0]{
   "sideImageUrl": sideImage.asset->url
 }`;
 
-const [products, testimonials, ritualSteps, seoData, heroData, brandSettings, promiseData, benefitsData, trustPointDocs] = await Promise.all([
+const [products, testimonials, ritualSteps, seoData, heroData, brandSettings, promiseData, benefitsData, trustPointDocs, bestSellersMeta] = await Promise.all([
   client.fetch(productsQuery, { locale }),
   client.fetch(testimonialsQuery, { locale }),
   client.fetch(ritualStepsQuery, { locale }),
@@ -74,6 +74,12 @@ const [products, testimonials, ritualSteps, seoData, heroData, brandSettings, pr
   client.fetch(promiseQuery, { locale }),
   client.fetch(benefitsQuery, { locale }),
   client.fetch(trustPointsQuery, { locale }),
+  client.fetch(`*[_id == "bestSellersSection"][0]{
+    "eyebrow":  eyebrow[_key == $locale][0].value,
+    "title":    title[_key == $locale][0].value,
+    "subtitle": subtitle[_key == $locale][0].value,
+    "dragHint": dragHint[_key == $locale][0].value
+  }`, { locale }),
 ]);
 
 const orderBtnLabel: string = brandSettings?.orderBtnLabel || "Order Now";
@@ -832,9 +838,21 @@ const benefits = [
   </section>
 
   <!-- ── All Products carousel ─────────────────────────────────── -->
-  {products.length > 0 && (
-    <BestSellers products={products} orderBtnLabel={orderBtnLabel} />
-  )}
+  {products.length > 0 && (() => {
+    const carouselProducts = products.some((p: any) => p.showInCarousel === false)
+      ? products.filter((p: any) => p.showInCarousel !== false)
+      : products;
+    return (
+      <BestSellers
+        products={carouselProducts}
+        orderBtnLabel={orderBtnLabel}
+        eyebrow={bestSellersMeta?.eyebrow}
+        title={bestSellersMeta?.title}
+        subtitle={bestSellersMeta?.subtitle}
+        dragHint={bestSellersMeta?.dragHint}
+      />
+    );
+  })()}
 
   <!-- ══ Enquire Modal ══════════════════════════════════════════════ -->
   <div

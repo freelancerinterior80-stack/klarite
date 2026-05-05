@@ -1,4 +1,4 @@
-export const productsQuery = `*[_type == "product"] | order(_createdAt asc) {
+export const productsQuery = `*[_type == "product"] | order(coalesce(carouselOrder, 999) asc, _createdAt asc) {
   "slug": slug.current,
   "name": coalesce(name[_key == $locale][0].value, name[_key == "fr"][0].value),
   "shortDesc": coalesce(shortDesc[_key == $locale][0].value, shortDesc[_key == "fr"][0].value),
@@ -9,6 +9,8 @@ export const productsQuery = `*[_type == "product"] | order(_createdAt asc) {
   price,
   accent,
   notes,
+  showInCarousel,
+  carouselOrder,
   "image": coalesce(images[0] { asset->, "alt": alt }, image { asset->, "alt": alt }),
   "images": images[1..99] { asset->, "alt": alt }
 }`;

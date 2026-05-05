@@ -1,0 +1,261 @@
+---
+export const prerender = false;
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { writeClient } from "@/sanity/write-client";
+
+const loc = (arr: any[] | null | undefined, key: string) =>
+  arr?.find((i: any) => i._key === key)?.value ?? "";
+
+let error = "";
+let successMsg = "";
+
+const DEFAULTS = {
+  eyebrow_fr: "Nos Best-Sellers", eyebrow_en: "Best-Sellers", eyebrow_ar: "الأكثر مبيعاً",
+  title_fr: "Une introduction au cœur de nos formules les plus désirées.",
+  title_en: "An introduction to the formulas clients ask for first.",
+  title_ar: "مقدمة لأكثر تركيباتنا طلباً وتميزاً.",
+  subtitle_fr: "Chaque produit est pensé pour s'intégrer naturellement à votre rituel.",
+  subtitle_en: "Each product is designed to integrate naturally into your routine, with an effect you notice from the first use.",
+  subtitle_ar: "كل منتج مصمم ليندمج بسلاسة في طقوسك اليومية.",
+  dragHint_fr: "← Glisser pour explorer →",
+  dragHint_en: "← Drag to explore →",
+  dragHint_ar: "← اسحب للاستكشاف →",
+};
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  const action = form.get("_action") as string;
+
+  try {
+    if (action === "save-heading") {
+      await writeClient.createIfNotExists({ _id: "bestSellersSection", _type: "bestSellersSection" });
+      await writeClient.patch("bestSellersSection").set({
+        'eyebrow[_key=="fr"].value':  form.get("eyebrow_fr") as string,
+        'eyebrow[_key=="en"].value':  form.get("eyebrow_en") as string,
+        'eyebrow[_key=="ar"].value':  form.get("eyebrow_ar") as string,
+        'title[_key=="fr"].value':    form.get("title_fr") as string,
+        'title[_key=="en"].value':    form.get("title_en") as string,
+        'title[_key=="ar"].value':    form.get("title_ar") as string,
+        'subtitle[_key=="fr"].value': form.get("subtitle_fr") as string,
+        'subtitle[_key=="en"].value': form.get("subtitle_en") as string,
+        'subtitle[_key=="ar"].value': form.get("subtitle_ar") as string,
+        'dragHint[_key=="fr"].value': form.get("dragHint_fr") as string,
+        'dragHint[_key=="en"].value': form.get("dragHint_en") as string,
+        'dragHint[_key=="ar"].value': form.get("dragHint_ar") as string,
+      }).commit();
+      successMsg = "Section heading saved.";
+    }
+
+    if (action === "toggle-product") {
+      const id    = form.get("productId") as string;
+      const shown = form.get("shown") === "1";
+      await writeClient.patch(id).set({ showInCarousel: shown }).commit();
+      successMsg = shown ? "Product added to carousel." : "Product hidden from carousel.";
+    }
+
+    if (action === "save-order") {
+      const ids    = (form.get("orderIds") as string).split(",").filter(Boolean);
+      await Promise.all(ids.map((id, i) =>
+        writeClient.patch(id).set({ carouselOrder: i + 1 }).commit()
+      ));
+      successMsg = "Carousel order saved.";
+    }
+  } catch (e) {
+    error = "Save failed. Please try again.";
+  }
+}
+
+// Fetch section doc + all products
+const raw = await writeClient.fetch(`*[_id == "bestSellersSection"][0]`);
+const doc = raw ?? {};
+
+if (!raw) {
+  await writeClient.createIfNotExists({
+    _id: "bestSellersSection", _type: "bestSellersSection",
+    eyebrow:  [{ _key: "fr", value: "" }, { _key: "en", value: "" }, { _key: "ar", value: "" }],
+    title:    [{ _key: "fr", value: "" }, { _key: "en", value: "" }, { _key: "ar", value: "" }],
+    subtitle: [{ _key: "fr", value: "" }, { _key: "en", value: "" }, { _key: "ar", value: "" }],
+    dragHint: [{ _key: "fr", value: "" }, { _key: "en", value: "" }, { _key: "ar", value: "" }],
+  });
+}
+
+const allProducts = await writeClient.fetch(`
+  *[_type == "product"] | order(coalesce(carouselOrder, 999) asc, _createdAt asc) {
+    _id, originalName, category, price,
+    "name_fr": name[_key == "fr"][0].value,
+    "imageUrl": coalesce(images[0].asset->url, image.asset->url),
+    showInCarousel,
+    carouselOrder
+  }
+`);
+---
+
+<AdminLayout title="Best Sellers Section">
+  <div class="mb-8">
+    <h1 class="font-display text-3xl text-charcoal">Best Sellers Section</h1>
+    <p class="mt-1 text-sm text-charcoal/55">Edit the section heading and choose which products appear in the homepage carousel.</p>
+  </div>
+
+  {error && <div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm text-red-700">{error}</div>}
+  {successMsg && <div class="mb-6 rounded-xl border border-green-200 bg-green-50 px-5 py-3 text-sm text-green-700">{successMsg}</div>}
+
+  <!-- ── Section Heading ──────────────────────────────────────── -->
+  <form method="POST" class="space-y-8">
+    <input type="hidden" name="_action" value="save-heading" />
+
+    <div class="rounded-[1.5rem] border border-charcoal/10 bg-white/70 p-7 shadow-[0_8px_30px_rgba(31,37,34,0.06)]">
+      <h2 class="mb-1 text-xs font-medium uppercase tracking-wider text-charcoal/50">Section Heading</h2>
+      <p class="mb-6 text-xs text-charcoal/40">Eyebrow, title, subtitle and the drag hint shown below the carousel.</p>
+
+      <div class="flex gap-0 border-b border-charcoal/10 mb-7">
+        <button type="button" data-tab-btn="fr" class="admin-tab-btn active">🇫🇷 French</button>
+        <button type="button" data-tab-btn="en" class="admin-tab-btn">🇬🇧 English</button>
+        <button type="button" data-tab-btn="ar" class="admin-tab-btn">🇸🇦 Arabic</button>
+      </div>
+
+      {[
+        { key: "fr", dir: "ltr" },
+        { key: "en", dir: "ltr" },
+        { key: "ar", dir: "rtl" },
+      ].map(({ key, dir }, i) => (
+        <div data-tab-panel={key} class:list={["space-y-5", i !== 0 && "hidden"]}>
+          <div class="admin-field">
+            <label>Eyebrow ({key.toUpperCase()})</label>
+            <input name={`eyebrow_${key}`} class="admin-input" dir={dir}
+              value={loc(doc.eyebrow, key) || (DEFAULTS as any)[`eyebrow_${key}`]} />
+          </div>
+          <div class="admin-field">
+            <label>Title ({key.toUpperCase()})</label>
+            <input name={`title_${key}`} class="admin-input" dir={dir}
+              value={loc(doc.title, key) || (DEFAULTS as any)[`title_${key}`]} />
+          </div>
+          <div class="admin-field">
+            <label>Subtitle ({key.toUpperCase()})</label>
+            <textarea name={`subtitle_${key}`} rows="3" class="admin-input" dir={dir}>
+              {loc(doc.subtitle, key) || (DEFAULTS as any)[`subtitle_${key}`]}
+            </textarea>
+          </div>
+          <div class="admin-field">
+            <label>Drag Hint ({key.toUpperCase()})</label>
+            <input name={`dragHint_${key}`} class="admin-input" dir={dir}
+              value={loc(doc.dragHint, key) || (DEFAULTS as any)[`dragHint_${key}`]} />
+            <p class="mt-1 text-xs text-charcoal/35">Small text shown below the carousel. E.g. "← Drag to explore →"</p>
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <div class="flex justify-end">
+      <button type="submit" class="rounded-xl bg-charcoal px-8 py-2.5 text-sm font-medium text-cream transition hover:bg-charcoal/80">
+        Save Heading
+      </button>
+    </div>
+  </form>
+
+  <!-- ── Product Visibility ───────────────────────────────────── -->
+  <div class="mt-8 rounded-[1.5rem] border border-charcoal/10 bg-white/70 p-7 shadow-[0_8px_30px_rgba(31,37,34,0.06)]">
+    <h2 class="mb-1 text-xs font-medium uppercase tracking-wider text-charcoal/50">Products in Carousel</h2>
+    <p class="mb-6 text-xs text-charcoal/40">Toggle each product on/off. Drag the handles to reorder. Changes apply instantly on save.</p>
+
+    <div id="product-list" class="space-y-3">
+      {allProducts.map((p: any) => (
+        <div class="flex items-center gap-4 rounded-xl border border-charcoal/8 bg-white px-4 py-3" data-id={p._id}>
+          <!-- Thumbnail -->
+          {p.imageUrl ? (
+            <img src={`${p.imageUrl}?w=80&h=80&fit=crop&auto=format`} alt="" class="h-12 w-12 shrink-0 rounded-lg object-cover" />
+          ) : (
+            <div class="h-12 w-12 shrink-0 rounded-lg bg-charcoal/8 flex items-center justify-center text-charcoal/25 text-xs">?</div>
+          )}
+
+          <!-- Info -->
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium text-charcoal truncate">{p.name_fr || p.originalName}</p>
+            <p class="text-xs text-charcoal/40">{p.category} · {p.price}</p>
+          </div>
+
+          <!-- Order badge -->
+          <span class="shrink-0 text-[0.65rem] text-charcoal/35">#{p.carouselOrder ?? "—"}</span>
+
+          <!-- Toggle -->
+          <form method="POST" class="shrink-0">
+            <input type="hidden" name="_action" value="toggle-product" />
+            <input type="hidden" name="productId" value={p._id} />
+            <input type="hidden" name="shown" value={p.showInCarousel === false ? "1" : "0"} />
+            <button
+              type="submit"
+              title={p.showInCarousel === false ? "Show in carousel" : "Hide from carousel"}
+              class:list={[
+                "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition",
+                p.showInCarousel === false
+                  ? "bg-charcoal/8 text-charcoal/40 hover:bg-charcoal/15"
+                  : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+              ]}
+            >
+              {p.showInCarousel === false ? (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                  Hidden
+                </>
+              ) : (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  Visible
+                </>
+              )}
+            </button>
+          </form>
+        </div>
+      ))}
+    </div>
+
+    <!-- Reorder form (populated by JS) -->
+    <form method="POST" id="reorder-form" class="mt-5 hidden">
+      <input type="hidden" name="_action" value="save-order" />
+      <input type="hidden" name="orderIds" id="order-ids-input" />
+      <button type="submit" class="rounded-xl bg-charcoal px-7 py-2.5 text-sm font-medium text-cream transition hover:bg-charcoal/80">
+        Save Order
+      </button>
+    </form>
+    <p class="mt-3 text-xs text-charcoal/35">Drag product rows to reorder, then click Save Order.</p>
+  </div>
+</AdminLayout>
+
+<script>
+  // Simple drag-to-reorder
+  const list = document.getElementById("product-list") as HTMLElement;
+  const reorderForm = document.getElementById("reorder-form") as HTMLFormElement;
+  const orderInput = document.getElementById("order-ids-input") as HTMLInputElement;
+
+  if (list) {
+    let dragging: HTMLElement | null = null;
+
+    list.querySelectorAll<HTMLElement>("[data-id]").forEach(row => {
+      row.setAttribute("draggable", "true");
+      row.style.cursor = "grab";
+
+      row.addEventListener("dragstart", () => {
+        dragging = row;
+        row.style.opacity = "0.5";
+      });
+      row.addEventListener("dragend", () => {
+        if (dragging) dragging.style.opacity = "1";
+        dragging = null;
+        // Update order input and show save button
+        const ids = [...list.querySelectorAll<HTMLElement>("[data-id]")].map(r => r.dataset.id!);
+        orderInput.value = ids.join(",");
+        reorderForm.classList.remove("hidden");
+      });
+      row.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        if (!dragging || dragging === row) return;
+        const rect = row.getBoundingClientRect();
+        const mid  = rect.top + rect.height / 2;
+        if ((e as DragEvent).clientY < mid) {
+          list.insertBefore(dragging, row);
+        } else {
+          list.insertBefore(dragging, row.nextSibling);
+        }
+      });
+    });
+  }
+</script>

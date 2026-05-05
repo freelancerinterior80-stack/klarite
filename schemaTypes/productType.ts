@@ -45,6 +45,14 @@ export const productType = defineType({
     defineField({ name: "shortDesc", title: "Short Description", type: "internationalizedArrayString" }),
     defineField({ name: "description", title: "Description", type: "internationalizedArrayText" }),
     defineField({ name: "ritual", title: "Ritual", type: "internationalizedArrayText" }),
+    defineField({
+      name: "showInCarousel",
+      title: "Show in Best Sellers Carousel",
+      type: "boolean",
+      initialValue: true,
+      description: "Toggle off to hide this product from the homepage carousel.",
+    }),
+    defineField({ name: "carouselOrder", title: "Carousel Order", type: "number", description: "Lower number = appears first in the carousel." }),
   ],
   preview: {
     select: { title: "originalName", media: "image" },

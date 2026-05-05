@@ -7,9 +7,13 @@ import type { Locale } from "@/i18n/config";
 interface Props {
   products: any[];
   orderBtnLabel?: string;
+  eyebrow?: string;
+  title?: string;
+  subtitle?: string;
+  dragHint?: string;
 }
 
-const { products, orderBtnLabel = "Order Now" } = Astro.props;
+const { products, orderBtnLabel = "Order Now", eyebrow, title, subtitle, dragHint } = Astro.props;
 const locale = (Astro.currentLocale ?? "fr") as Locale;
 const t = getTranslations(locale);
 ---
@@ -17,9 +21,9 @@ const t = getTranslations(locale);
 <section id="boutique" class="section-band section-band--warm py-20 sm:py-28">
   <div class="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-10">
     <SectionHeading
-      eyebrow={t.sections.bestSellers.eyebrow}
-      title={t.sections.bestSellers.title}
-      copy={t.sections.bestSellers.subtitle}
+      eyebrow={eyebrow || t.sections.bestSellers.eyebrow}
+      title={title || t.sections.bestSellers.title}
+      copy={subtitle || t.sections.bestSellers.subtitle}
     />
   </div>
 
@@ -39,7 +43,7 @@ const t = getTranslations(locale);
   <div class="mt-5 flex items-center justify-center gap-3 px-4">
     <div class="h-px w-8 bg-charcoal/15"></div>
     <p class="text-[0.6rem] uppercase tracking-[0.32em] text-charcoal/30">
-      <span class="hidden md:inline">← Glisser pour explorer →</span>
+      <span class="hidden md:inline">{dragHint || "← Glisser pour explorer →"}</span>
       <span class="md:hidden">← Swiper →</span>
     </p>
     <div class="h-px w-8 bg-charcoal/15"></div>
