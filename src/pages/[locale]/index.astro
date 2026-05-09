@@ -129,7 +129,7 @@ const hero = {
   headlineFontFamily: heroData?.headlineFontFamily || "'Playfair Display', Georgia, serif",
   headlineFontSize:   heroData?.headlineFontSize   || "7.5",
   headlineFontWeight: heroData?.headlineFontWeight || "400",
-  headlineAlignment:  heroData?.headlineAlignment  || "left",
+  headlineAlignment:  heroData?.headlineAlignment  || "center",
 };
 
 const defaultTicker = [
@@ -223,12 +223,12 @@ const signatureSection = {
     <div class="relative mx-auto grid w-full max-w-[90rem] gap-10 lg:grid-cols-[1fr_1.08fr] lg:items-center lg:gap-16">
 
       <!-- LEFT — text column -->
-      <div data-reveal>
+      <div class="text-center lg:text-left" data-reveal>
         <p class="eyebrow">{hero.eyebrow}</p>
 
         <h1
-          class="section-title mt-6 text-charcoal"
-          style={`font-family:${hero.headlineFontFamily}; font-size:clamp(3.2rem, 7vw, ${hero.headlineFontSize}rem); font-weight:${hero.headlineFontWeight}; text-align:${hero.headlineAlignment}; max-width:12ch; line-height:1.04;`}
+          class:list={["section-title mt-6 text-charcoal", `lg:text-${hero.headlineAlignment}`]}
+          style={`font-family:${hero.headlineFontFamily}; font-size:clamp(3.2rem, 7vw, ${hero.headlineFontSize}rem); font-weight:${hero.headlineFontWeight}; max-width:12ch; line-height:1.04;`}
         >
           {hero.headline}
         </h1>
@@ -238,12 +238,12 @@ const signatureSection = {
         </p>
 
         <!-- Social proof -->
-        <div class="mt-7 flex items-center gap-3">
+        <div class="mt-7 flex items-center justify-center gap-3 lg:justify-start">
           <div class="flex gap-0.5 leading-none text-gold" style="font-size:1rem;" aria-hidden="true">★★★★★</div>
           <span class="text-[0.7rem] text-charcoal/55">4.9 / 5 &nbsp;·&nbsp; 200+ clientes satisfaites</span>
         </div>
 
-        <div class="mt-8 flex flex-col gap-4 sm:flex-row">
+        <div class="mt-8 flex flex-col items-center gap-4 sm:flex-row lg:items-start">
           <a href="#signature-products" class="cta-primary">{hero.cta1}</a>
           <a href="#skin-quiz" class="cta-secondary">{hero.cta2}</a>
         </div>
