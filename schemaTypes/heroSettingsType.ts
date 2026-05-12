@@ -58,9 +58,39 @@ export const heroSettingsType = defineType({
       initialValue: "left",
       options: {
         list: [
-          { title: "Left",   value: "left" },
-          { title: "Center", value: "center" },
-          { title: "Right",  value: "right" },
+          { title: "Left",    value: "left" },
+          { title: "Center",  value: "center" },
+          { title: "Right",   value: "right" },
+          { title: "Justify", value: "justify" },
+        ],
+        layout: "radio",
+      },
+    }),
+    defineField({
+      name: "heroSectionHeight",
+      title: "Section Height (desktop)",
+      type: "string",
+      initialValue: "full",
+      options: {
+        list: [
+          { title: "Compact (~65vh)",    value: "compact" },
+          { title: "Normal (~80vh)",     value: "normal" },
+          { title: "Full Screen (100vh)", value: "full" },
+        ],
+        layout: "radio",
+      },
+    }),
+    defineField({
+      name: "heroColumnWidth",
+      title: "Text Column Width (desktop)",
+      type: "string",
+      initialValue: "48",
+      options: {
+        list: [
+          { title: "Narrow (40%)",      value: "40" },
+          { title: "Standard (48%)",    value: "48" },
+          { title: "Wide (55%)",        value: "55" },
+          { title: "Extra Wide (62%)",  value: "62" },
         ],
         layout: "radio",
       },

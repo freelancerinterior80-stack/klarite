@@ -98,6 +98,13 @@ if (Astro.request.method === "POST") {
         error = "No badge image selected.";
       }
 
+    } else if (action === "save-layout") {
+      await writeClient.patch("heroSettings").set({
+        heroSectionHeight: (form.get("heroSectionHeight") as string) || "full",
+        heroColumnWidth:   (form.get("heroColumnWidth")   as string) || "48",
+      }).commit();
+      successMsg = "Layout saved.";
+
     } else if (action === "save-typography") {
       await writeClient.patch("heroSettings").set({
         headlineFontFamily: (form.get("headlineFontFamily") as string) ?? "",
@@ -184,6 +191,8 @@ const doc = await writeClient.fetch(`*[_id == "heroSettings"][0]{
   headlineFontSize,
   headlineFontWeight,
   headlineAlignment,
+  heroSectionHeight,
+  heroColumnWidth,
 }`);
 
 const v = (field: string, locale: string) => loc(doc?.[field], locale);
@@ -435,12 +444,13 @@ const currentMediaType: string = doc?.mediaType ?? "image";
         <div class="admin-field">
           <label>Alignment</label>
           <div class="mt-1 flex gap-1" id="align-group">
-            {(["left","center","right"] as const).map((a) => {
+            {(["left","center","right","justify"] as const).map((a) => {
               const isActive = (doc?.headlineAlignment ?? "left") === a;
               const icons = {
-                left:   `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>`,
-                center: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>`,
-                right:  `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="6" y1="18" x2="21" y2="18"/></svg>`,
+                left:    `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>`,
+                center:  `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>`,
+                right:   `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="6" y1="18" x2="21" y2="18"/></svg>`,
+                justify: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>`,
               };
               return (
                 <label class:list={["flex flex-1 cursor-pointer items-center justify-center rounded-lg border py-2 transition", isActive ? "border-charcoal bg-charcoal text-cream" : "border-charcoal/15 bg-white text-charcoal/60 hover:border-charcoal/30"]}>
@@ -468,6 +478,49 @@ const currentMediaType: string = doc?.mediaType ?? "image";
         <button type="submit" class="rounded-xl bg-charcoal px-6 py-2 text-xs font-medium text-cream transition hover:bg-charcoal/80">
           Save Typography
         </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ── LAYOUT ─────────────────────────────────────────────── -->
+  <div class="rounded-[1.5rem] border border-charcoal/10 bg-white/70 p-7 shadow-[0_8px_30px_rgba(31,37,34,0.06)] mb-6">
+    <h2 class="mb-1 text-xs font-medium uppercase tracking-wider text-charcoal/50">Layout (Desktop)</h2>
+    <p class="mb-6 text-xs text-charcoal/40">Controls the section height and how wide the text column is on desktop screens.</p>
+    <form method="POST" class="space-y-6">
+      <input type="hidden" name="_action" value="save-layout" />
+
+      <div class="admin-field">
+        <label>Section Height</label>
+        <div class="mt-2 flex gap-2 flex-wrap">
+          {([ ["compact","Compact ~65vh"], ["normal","Normal ~80vh"], ["full","Full Screen 100vh"] ] as const).map(([val, label]) => {
+            const active = (doc?.heroSectionHeight ?? "full") === val;
+            return (
+              <label class:list={["flex cursor-pointer items-center gap-2 rounded-xl border px-4 py-2.5 text-sm transition", active ? "border-charcoal bg-charcoal text-cream" : "border-charcoal/15 bg-white text-charcoal/60 hover:border-charcoal/30"]}>
+                <input type="radio" name="heroSectionHeight" value={val} checked={active || undefined} class="sr-only" />
+                {label}
+              </label>
+            );
+          })}
+        </div>
+      </div>
+
+      <div class="admin-field">
+        <label>Text Column Width</label>
+        <div class="mt-2 flex gap-2 flex-wrap">
+          {([ ["40","Narrow 40%"], ["48","Standard 48%"], ["55","Wide 55%"], ["62","Extra Wide 62%"] ] as const).map(([val, label]) => {
+            const active = (doc?.heroColumnWidth ?? "48") === val;
+            return (
+              <label class:list={["flex cursor-pointer items-center gap-2 rounded-xl border px-4 py-2.5 text-sm transition", active ? "border-charcoal bg-charcoal text-cream" : "border-charcoal/15 bg-white text-charcoal/60 hover:border-charcoal/30"]}>
+                <input type="radio" name="heroColumnWidth" value={val} checked={active || undefined} class="sr-only" />
+                {label}
+              </label>
+            );
+          })}
+        </div>
+      </div>
+
+      <div class="flex justify-end">
+        <button type="submit" class="rounded-xl bg-charcoal px-8 py-2.5 text-sm font-medium text-cream transition hover:bg-charcoal/80">Save Layout</button>
       </div>
     </form>
   </div>

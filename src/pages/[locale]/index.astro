@@ -43,6 +43,8 @@ const heroQuery = `*[_id == "heroSettings"][0]{
   headlineFontSize,
   headlineFontWeight,
   headlineAlignment,
+  heroSectionHeight,
+  heroColumnWidth,
 }`;
 
 const benefitsQuery = `*[_id == "benefitsSection"][0]{
@@ -126,11 +128,18 @@ const hero = {
   formulaText:    heroData?.formulaText    || "Cushion-soft hydration with a satin glow.",
   badgeLabel:     heroData?.badgeLabel     || "Signature Care",
   badgeTitle:     heroData?.badgeTitle     || "Face Cream",
-  headlineFontFamily: heroData?.headlineFontFamily || "'Playfair Display', Georgia, serif",
-  headlineFontSize:   heroData?.headlineFontSize   || "7.5",
-  headlineFontWeight: heroData?.headlineFontWeight || "400",
-  headlineAlignment:  heroData?.headlineAlignment  || "center",
+  headlineFontFamily:  heroData?.headlineFontFamily  || "'Playfair Display', Georgia, serif",
+  headlineFontSize:    heroData?.headlineFontSize    || "7.5",
+  headlineFontWeight:  heroData?.headlineFontWeight  || "400",
+  headlineAlignment:   heroData?.headlineAlignment   || "left",
+  heroSectionHeight:   heroData?.heroSectionHeight   || "full",
+  heroColumnWidth:     heroData?.heroColumnWidth      || "48",
 };
+
+const heroMinHeight: Record<string, string> = { compact: "65dvh", normal: "80dvh", full: "100dvh" };
+const heroHeight = heroMinHeight[hero.heroSectionHeight] || "100dvh";
+const heroColLeft = `${hero.heroColumnWidth}%`;
+const heroColRight = `${100 - parseInt(hero.heroColumnWidth)}%`;
 
 const defaultTicker = [
   "Formulated in Tunisia", "Argan & Rose", "Satin Finish",
@@ -200,7 +209,7 @@ const signatureSection = {
     titleSuffix: seoData?.titleSuffix,
   }}
 >
-  <Fragment set:html={`<style>:root{--order-btn-bg:${orderBtnBg};--order-btn-text:${orderBtnText};}</style>`} />
+  <Fragment set:html={`<style>:root{--order-btn-bg:${orderBtnBg};--order-btn-text:${orderBtnText};}#hero-section{min-height:${heroHeight};}@media(min-width:1024px){.hero-grid{grid-template-columns:${heroColLeft} ${heroColRight}!important;}}</style>`} />
 
   <!-- ══════════════════════════════════════════════════════════════
        CAMPAIGN BANNER — shown when a campaign is active
@@ -212,7 +221,7 @@ const signatureSection = {
        ══════════════════════════════════════════════════════════════ -->
   <section
     id="hero-section"
-    class="section-band section-band--first section-band--cream relative flex min-h-[100dvh] flex-col justify-center px-4 pb-16 pt-10 sm:px-6 lg:px-10 lg:pb-20 lg:pt-14"
+    class="section-band section-band--first section-band--cream relative flex flex-col justify-center px-4 pb-16 pt-10 sm:px-6 lg:px-10 lg:pb-20 lg:pt-14"
   >
     <!-- Ambient background glow -->
     <div class="pointer-events-none absolute inset-0 overflow-hidden">
@@ -220,7 +229,7 @@ const signatureSection = {
       <div class="absolute left-[-5%] bottom-[10%] h-[40vw] w-[40vw] max-h-[480px] max-w-[480px] rounded-full bg-sage-300/14 blur-[100px]"></div>
     </div>
 
-    <div class="relative mx-auto grid w-full max-w-[90rem] gap-10 lg:grid-cols-[1fr_1.08fr] lg:items-center lg:gap-16">
+    <div class="hero-grid relative mx-auto grid w-full max-w-[90rem] gap-10 lg:items-center lg:gap-16">
 
       <!-- LEFT — text column -->
       <div data-reveal>
@@ -228,7 +237,7 @@ const signatureSection = {
 
         <h1
           class="section-title mt-6 text-charcoal"
-          style={`font-family:${hero.headlineFontFamily}; font-size:clamp(1.5rem, 7vw, ${hero.headlineFontSize}rem); font-weight:${hero.headlineFontWeight}; max-width:12ch; line-height:1.04;`}
+          style={`font-family:${hero.headlineFontFamily}; font-size:clamp(1.5rem, 7vw, ${hero.headlineFontSize}rem); font-weight:${hero.headlineFontWeight}; text-align:${hero.headlineAlignment}; line-height:1.1;`}
         >
           {hero.headline}
         </h1>
