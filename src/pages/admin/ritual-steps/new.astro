@@ -94,3 +94,15 @@ if (Astro.request.method === "POST") {
     </div>
   </form>
 </AdminLayout>
+
+<script>
+  document.querySelectorAll("[data-tab-btn]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const key = (btn as HTMLElement).dataset.tabBtn!;
+      document.querySelectorAll("[data-tab-btn]").forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll("[data-tab-panel]").forEach((p) => p.classList.add("hidden"));
+      btn.classList.add("active");
+      document.querySelector(`[data-tab-panel="${key}"]`)?.classList.remove("hidden");
+    });
+  });
+</script>

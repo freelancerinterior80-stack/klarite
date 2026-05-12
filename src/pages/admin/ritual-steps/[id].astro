@@ -8,31 +8,63 @@ const loc = (arr: any[] | null | undefined, key: string) =>
   arr?.find((i: any) => i._key === key)?.value ?? "";
 
 let error = "";
+let success = "";
 
 if (Astro.request.method === "POST") {
   const form = await Astro.request.formData();
-  try {
-    await writeClient
-      .patch(id!)
-      .set({
-        'title[_key=="fr"].value': form.get("title_fr") as string,
-        'title[_key=="en"].value': form.get("title_en") as string,
-        'title[_key=="ar"].value': form.get("title_ar") as string,
-        'copy[_key=="fr"].value':  form.get("copy_fr") as string,
-        'copy[_key=="en"].value':  form.get("copy_en") as string,
-        'copy[_key=="ar"].value':  form.get("copy_ar") as string,
-        number: form.get("number") as string,
-      })
-      .commit();
+  const action = form.get("_action") as string;
 
-    return Astro.redirect("/admin/ritual-steps?saved=1");
+  try {
+    if (action === "save-text") {
+      await writeClient
+        .patch(id!)
+        .set({
+          'title[_key=="fr"].value': form.get("title_fr") as string,
+          'title[_key=="en"].value': form.get("title_en") as string,
+          'title[_key=="ar"].value': form.get("title_ar") as string,
+          'copy[_key=="fr"].value':  form.get("copy_fr") as string,
+          'copy[_key=="en"].value':  form.get("copy_en") as string,
+          'copy[_key=="ar"].value':  form.get("copy_ar") as string,
+          number: form.get("number") as string,
+        })
+        .commit();
+      success = "Text saved successfully.";
+    }
+
+    if (action === "upload-image") {
+      const file = form.get("image") as File;
+      if (!file || file.size === 0) {
+        error = "Please select an image file.";
+      } else {
+        const buffer = Buffer.from(await file.arrayBuffer());
+        const asset = await writeClient.assets.upload("image", buffer, {
+          filename: file.name,
+          contentType: file.type,
+        });
+        await writeClient
+          .patch(id!)
+          .set({
+            image: {
+              _type: "image",
+              asset: { _type: "reference", _ref: asset._id },
+              alt: (form.get("alt") as string) || "",
+            },
+          })
+          .commit();
+        success = "Image updated successfully.";
+      }
+    }
   } catch (e) {
     error = "Save failed. Please try again.";
   }
 }
 
 const doc = await writeClient.fetch(
-  `*[_id == $id][0]{ _id, number, order, title, copy }`,
+  `*[_id == $id][0]{
+    _id, number, order, title, copy,
+    "imageUrl": image.asset->url,
+    "imageAlt": image.alt
+  }`,
   { id }
 );
 
@@ -48,10 +80,55 @@ if (!doc) return Astro.redirect("/admin/ritual-steps");
   {error && (
     <div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm text-red-700">{error}</div>
   )}
+  {success && (
+    <div class="mb-6 rounded-xl border border-green-200 bg-green-50 px-5 py-3 text-sm text-green-700">{success}</div>
+  )}
 
+  <!-- Image Upload -->
+  <div class="mb-8 rounded-[1.5rem] border border-charcoal/10 bg-white/70 p-7 shadow-[0_8px_30px_rgba(31,37,34,0.06)]">
+    <h2 class="mb-5 text-xs font-medium uppercase tracking-wider text-charcoal/50">Step Image</h2>
+
+    {doc.imageUrl && (
+      <div class="mb-6">
+        <img
+          src={`${doc.imageUrl}?w=600&auto=format`}
+          alt={doc.imageAlt || "Step image"}
+          class="h-56 w-full rounded-[1rem] object-cover shadow-sm"
+        />
+      </div>
+    )}
+    {!doc.imageUrl && (
+      <div class="mb-6 flex h-40 w-full items-center justify-center rounded-[1rem] border-2 border-dashed border-charcoal/15 bg-cream/40 text-sm text-charcoal/40">
+        No image uploaded yet
+      </div>
+    )}
+
+    <form method="POST" enctype="multipart/form-data" class="space-y-4">
+      <input type="hidden" name="_action" value="upload-image" />
+      <div class="grid gap-4 sm:grid-cols-[1fr_auto]">
+        <div class="admin-field">
+          <label>New Image <span class="text-charcoal/40 font-normal">(JPEG, PNG or WebP)</span></label>
+          <input type="file" name="image" accept="image/*" class="admin-input" required />
+        </div>
+        <div class="admin-field">
+          <label>Alt Text</label>
+          <input name="alt" class="admin-input" value={doc.imageAlt || ""} placeholder="Describe the image" />
+        </div>
+      </div>
+      <div class="flex justify-end">
+        <button type="submit" class="rounded-xl bg-charcoal px-7 py-2.5 text-sm font-medium text-cream transition hover:bg-charcoal/80">
+          Upload Image
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Text Content -->
   <form method="POST" class="space-y-8">
+    <input type="hidden" name="_action" value="save-text" />
 
     <div class="rounded-[1.5rem] border border-charcoal/10 bg-white/70 p-7 shadow-[0_8px_30px_rgba(31,37,34,0.06)]">
+      <h2 class="mb-5 text-xs font-medium uppercase tracking-wider text-charcoal/50">Content</h2>
       <div class="flex gap-0 border-b border-charcoal/10 mb-7">
         <button type="button" data-tab-btn="fr" class="admin-tab-btn active">🇫🇷 French</button>
         <button type="button" data-tab-btn="en" class="admin-tab-btn">🇬🇧 English</button>
@@ -102,6 +179,17 @@ if (!doc) return Astro.redirect("/admin/ritual-steps");
       <a href="/admin/ritual-steps" class="rounded-xl border border-charcoal/15 px-6 py-2.5 text-sm text-charcoal/60 hover:text-charcoal transition">Cancel</a>
       <button type="submit" class="rounded-xl bg-charcoal px-8 py-2.5 text-sm font-medium text-cream transition hover:bg-charcoal/80">Save Changes</button>
     </div>
-
   </form>
 </AdminLayout>
+
+<script>
+  document.querySelectorAll("[data-tab-btn]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const key = (btn as HTMLElement).dataset.tabBtn!;
+      document.querySelectorAll("[data-tab-btn]").forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll("[data-tab-panel]").forEach((p) => p.classList.add("hidden"));
+      btn.classList.add("active");
+      document.querySelector(`[data-tab-panel="${key}"]`)?.classList.remove("hidden");
+    });
+  });
+</script>
