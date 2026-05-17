@@ -107,6 +107,12 @@ const promise = {
   sideImageUrl: promiseData?.sideImageUrl || null,
 };
 
+const promiseFallbackImageUrl = "/images/promise-skin-story.png";
+const withImageParams = (url: string, params: string) =>
+  url.includes("?") ? `${url}&${params}` : `${url}?${params}`;
+const promiseImageSrc = withImageParams(promiseFallbackImageUrl, "w=760&auto=format");
+const promiseFallbackImageSrc = withImageParams(promiseFallbackImageUrl, "w=760&auto=format");
+
 // Resolve video URL: uploaded file takes priority over external URL
 const heroVideoSrc = heroData?.heroVideoFileUrl || heroData?.heroVideoUrl || null;
 
@@ -498,23 +504,22 @@ const signatureSection = {
           </div>
         </div>
 
-        <!-- Right: side image (only shown when set) -->
-        {promise.sideImageUrl && (
-          <div class="hidden lg:block shrink-0 w-[320px] xl:w-[380px]" data-reveal>
-            <div class="relative overflow-hidden rounded-2xl">
-              <img
-                src={`${promise.sideImageUrl}?w=760&auto=format`}
-                alt="KLARITÉ promise"
-                class="w-full object-cover"
-                style="aspect-ratio: 3/4;"
-                loading="lazy"
-                decoding="async"
-              />
-              <!-- Subtle gold border overlay -->
-              <div class="absolute inset-0 rounded-2xl ring-1 ring-gold/20 pointer-events-none"></div>
-            </div>
+        <!-- Right: side image -->
+        <div class="hidden lg:block shrink-0 w-[320px] xl:w-[380px]" data-reveal>
+          <div class="relative overflow-hidden rounded-2xl">
+            <img
+              src={promiseImageSrc}
+              alt="KLARITÉ promise"
+              class="w-full object-cover"
+              style="aspect-ratio: 3/4;"
+              loading="lazy"
+              decoding="async"
+              onerror={`this.onerror=null;this.src='${promiseFallbackImageSrc}';`}
+            />
+            <!-- Subtle gold border overlay -->
+            <div class="absolute inset-0 rounded-2xl ring-1 ring-gold/20 pointer-events-none"></div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   </section>
@@ -526,7 +531,7 @@ const signatureSection = {
           <p class="eyebrow">{signatureSection.eyebrow}</p>
           <h2
             class="section-title mt-7 text-charcoal"
-            style={`font-family:${signatureSection.headlineFontFamily}; font-size:clamp(1.5rem, 6.5vw, ${signatureSection.headlineFontSize}rem); font-weight:${signatureSection.headlineFontWeight}; text-align:${signatureSection.headlineAlignment}; max-width:14ch;`}
+            style={`font-family:${signatureSection.headlineFontFamily}; font-size:clamp(1.5rem, 6.5vw, ${signatureSection.headlineFontSize}rem); font-weight:${signatureSection.headlineFontWeight}; text-align:${signatureSection.headlineAlignment}; max-width:min(100%, 24ch);`}
           >
             {signatureSection.headline}
           </h2>
@@ -625,11 +630,11 @@ const signatureSection = {
         />
       </div>
 
-      <div class="max-w-[34rem]" data-reveal>
+      <div class="max-w-[62rem] lg:max-w-[42rem]" data-reveal>
         <p class="eyebrow">{benefitsSection.eyebrow}</p>
         <h2
           class="section-title mt-7 text-charcoal"
-          style="font-size: clamp(2.6rem, 5.5vw, 6rem); max-width: 12ch;"
+          style="font-size: clamp(2.6rem, 5.5vw, 6rem); max-width: min(100%, 22ch);"
         >
           {benefitsSection.headline}
         </h2>
@@ -678,7 +683,7 @@ const signatureSection = {
           <p class="eyebrow">Collection</p>
           <h2
             class="section-title mt-7 text-charcoal"
-            style="font-size: clamp(2.8rem, 6.5vw, 7rem); max-width: 14ch;"
+            style="font-size: clamp(2.8rem, 6.5vw, 7rem); max-width: min(100%, 22ch);"
           >
             The collection arranged with discipline and restraint.
           </h2>
@@ -758,11 +763,11 @@ const signatureSection = {
 
   <section id="rituals" class="section-band section-band--cream px-4 py-36 sm:px-6 lg:px-10 lg:py-40">
     <div class="mx-auto max-w-[90rem]">
-      <div class="max-w-[38rem]" data-reveal>
+      <div class="max-w-full" data-reveal>
         <p class="eyebrow">Ritual</p>
         <h2
-          class="section-title mt-7 text-charcoal"
-          style="font-size: clamp(3rem, 7vw, 8rem); max-width: 10ch;"
+          class="section-title mt-7 text-charcoal lg:whitespace-nowrap"
+          style="font-size: clamp(3rem, 7vw, 8rem); max-width: min(100%, 30ch);"
         >
           Cleanse, hydrate, perfume.
         </h2>
